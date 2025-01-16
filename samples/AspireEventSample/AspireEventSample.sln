@@ -10,6 +10,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspireEventSample.ApiServic
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspireEventSample.Web", "AspireEventSample.Web\AspireEventSample.Web.csproj", "{75B69DFB-9BDA-4174-9243-6BEFD84FD699}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure", "Sekiban.Pure\Sekiban.Pure.csproj", "{BAF60A34-C75F-479E-B6F8-8F59309A6CC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.SourceGenerator", "Sekiban.Pure.SourceGenerator\Sekiban.Pure.SourceGenerator.csproj", "{31C8423B-BD5B-43C2-B791-0842419E0CB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +36,14 @@ Global
 		{75B69DFB-9BDA-4174-9243-6BEFD84FD699}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75B69DFB-9BDA-4174-9243-6BEFD84FD699}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{75B69DFB-9BDA-4174-9243-6BEFD84FD699}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAF60A34-C75F-479E-B6F8-8F59309A6CC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAF60A34-C75F-479E-B6F8-8F59309A6CC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAF60A34-C75F-479E-B6F8-8F59309A6CC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAF60A34-C75F-479E-B6F8-8F59309A6CC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31C8423B-BD5B-43C2-B791-0842419E0CB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31C8423B-BD5B-43C2-B791-0842419E0CB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31C8423B-BD5B-43C2-B791-0842419E0CB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31C8423B-BD5B-43C2-B791-0842419E0CB3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
