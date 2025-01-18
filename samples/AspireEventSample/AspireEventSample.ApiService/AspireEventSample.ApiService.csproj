@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AspireEventSample.ServiceDefaults\AspireEventSample.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Sekiban.Pure\Sekiban.Pure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
