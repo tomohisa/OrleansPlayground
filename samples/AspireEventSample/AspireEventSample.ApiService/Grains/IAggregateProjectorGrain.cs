@@ -48,7 +48,7 @@ public class AggregateProjectorGrain : Grain, IAggregateProjectorGrain
         var commandExecutor = new CommandExecutor();
         var aggregateType = command.GetAggregatePayloadType();
         var result = await commandExecutor.ExecuteGeneralNonGeneric(command, projector, partitionKeysSpecifier, NoInjection.Empty, handler, aggregateType);
-        return result.ToOrleansResultBox();
+        return result.UnwrapBox();
     }
 
     public async Task<IAggregatePayload> RebuildStateAsync()
