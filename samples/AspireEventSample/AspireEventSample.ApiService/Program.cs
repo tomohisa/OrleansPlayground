@@ -40,6 +40,9 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
+app.MapPost()
+
+
 app.MapDefaultEndpoints();
 
 app.Run();
