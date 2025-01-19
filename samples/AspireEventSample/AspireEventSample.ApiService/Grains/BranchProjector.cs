@@ -1,0 +1,16 @@
+using Sekiban.Pure.Aggregates;
+using Sekiban.Pure.Events;
+using Sekiban.Pure.Projectors;
+
+namespace AspireEventSample.ApiService.Grains;
+
+public class BranchProjector : IAggregateProjector
+{
+    public IAggregatePayload Project(IAggregatePayload payload, IEvent ev) =>
+        (payload, ev.GetPayload()) switch
+        {
+            (EmptyAggregatePayload, BranchCreated created) => new Branch(created.Name),
+            (Branch branch, BranchNameChanged changed) => new Branch(changed.Name),
+            _ => payload
+        };
+}
