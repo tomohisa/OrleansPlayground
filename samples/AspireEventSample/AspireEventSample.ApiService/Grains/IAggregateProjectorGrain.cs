@@ -20,7 +20,7 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     /// </summary>
     /// <param name="command">実行するコマンド</param>
     /// <returns>実行後の状態や生成イベントなど、必要に応じて返す</returns>
-    Task<CommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable command);
+    Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable command);
 
     /// <summary>
     /// State を一から再構築する(バージョンアップ時や State 破損時など)。

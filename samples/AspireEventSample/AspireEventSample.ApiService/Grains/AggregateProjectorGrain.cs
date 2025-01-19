@@ -14,7 +14,7 @@ public class AggregateProjectorGrain(
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         return Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
     }
-    public async Task<CommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable command)
+    public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable command)
     {
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         this.GetPrimaryKeyString();
@@ -23,7 +23,7 @@ public class AggregateProjectorGrain(
         var aggregate = Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
         state.State = aggregate;
         await state.WriteStateAsync();
-        return result.UnwrapBox();
+        return result.UnwrapBox().ToOrleansCommandResponse();
     }
 
     public async Task<IAggregatePayload> RebuildStateAsync()

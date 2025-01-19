@@ -1,3 +1,6 @@
+using AspireEventSample.ApiService.Grains;
+using Microsoft.AspNetCore.Mvc;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -22,6 +25,7 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapDefaultEndpoints();
 }
 
 string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
@@ -40,10 +44,15 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapPost()
-
-
 app.MapDefaultEndpoints();
+
+// Add new app.MapPost() method here
+app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromServices]IClusterClient clusterClient) =>
+{
+    var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>("");
+    await aggregateProjectorGrain.ExecuteCommandAsync(command);
+}).WithName("RegisterBranch")
+    .WithOpenApi();
 
 app.Run();
 
