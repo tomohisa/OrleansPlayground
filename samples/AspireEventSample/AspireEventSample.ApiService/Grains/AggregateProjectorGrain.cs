@@ -2,6 +2,7 @@ using ResultBoxes;
 using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
+using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Repositories;
 
 namespace AspireEventSample.ApiService.Grains;

@@ -1,6 +1,7 @@
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
 using Sekiban.Pure.Command.Executor;
+using Sekiban.Pure.OrleansEventSourcing;
 
 var builder = WebApplication.CreateBuilder(args);
 
