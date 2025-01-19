@@ -1,5 +1,6 @@
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
+using Sekiban.Pure.Command.Executor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +51,8 @@ app.MapDefaultEndpoints();
 app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromServices]IClusterClient clusterClient) =>
 {
     var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>("");
-    await aggregateProjectorGrain.ExecuteCommandAsync(command);
+    OrleansCommand orleansCommand = new OrleansCommand(command.ToString());
+    await aggregateProjectorGrain.ExecuteCommandAsync(orleansCommand);
 }).WithName("RegisterBranch")
     .WithOpenApi();
 
