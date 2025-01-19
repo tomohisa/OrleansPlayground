@@ -14,8 +14,9 @@ public class AggregateProjectorGrain(
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         return Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
     }
-    public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable command)
+    public async Task<OrleansCommandResponse> ExecuteCommandAsync(OrleansCommand orleansCommand)
     {
+        ICommandWithHandlerSerializable command = orleansCommand as ICommandWithHandlerSerializable ?? throw new ArgumentException("Invalid command type");
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         this.GetPrimaryKeyString();
         var commandExecutor = new CommandExecutor();
