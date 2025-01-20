@@ -1,6 +1,8 @@
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
+using ResultBoxes;
 using Scalar.AspNetCore;
+using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
@@ -71,10 +73,11 @@ app.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [Fro
 
 app.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient) =>
     {
-    var partitionKeyAndProjector = new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
-    var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-    return await aggregateProjectorGrain.ge();
-}).WithName("GetBranch")
+        var partitionKeyAndProjector = new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
+        var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
+        var state = await aggregateProjectorGrain.GetStateAsync();
+        return state.ToTypedPayload<Branch>().UnwrapBox();
+    }).WithName("GetBranch")
     .WithOpenApi();
 
 

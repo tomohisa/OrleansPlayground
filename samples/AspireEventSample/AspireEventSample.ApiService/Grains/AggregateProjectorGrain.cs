@@ -12,10 +12,11 @@ namespace AspireEventSample.ApiService.Grains;
 public class AggregateProjectorGrain(
     [PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<Aggregate> state) : Grain, IAggregateProjectorGrain
 {
-    public async Task<IAggregate> GetStateAsync()
+    public async Task<OrleansAggregate> GetStateAsync()
     {
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
-        return Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
+        var state = Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
+        return state.ToOrleansAggregate();
     }
 
     public Task<IAggregateProjector> GetProjectorAsync()
