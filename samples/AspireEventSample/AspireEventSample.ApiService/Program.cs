@@ -1,3 +1,4 @@
+using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
 using ResultBoxes;
@@ -6,6 +7,7 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Types;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,9 @@ builder.Services.AddOpenApi();
 builder.AddKeyedAzureTableClient("clustering");
 builder.AddKeyedAzureBlobClient("grain-state");
 builder.UseOrleans();
+
+builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApiServiceAggregateTypes(),
+    new AspireEventSampleApiServiceEventTypes()));
 
 var app = builder.Build();
 
@@ -71,12 +76,12 @@ app.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [Fro
 }).WithName("ChangeBranchName")
     .WithOpenApi();
 
-app.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient) =>
+app.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient, [FromServices] SekibanTypeConverters typeConverters) =>
     {
         var partitionKeyAndProjector = new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
         var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
         var state = await aggregateProjectorGrain.GetStateAsync();
-        return state.ToTypedPayload<Branch>().UnwrapBox();
+        return typeConverters.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
     }).WithName("GetBranch")
     .WithOpenApi();
 
