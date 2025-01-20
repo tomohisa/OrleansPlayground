@@ -15,9 +15,13 @@ public class AggregateProjectorGrain(
 {
     public async Task<OrleansAggregate> GetStateAsync()
     {
-        var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
-        var state = Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
-        return state.ToOrleansAggregate();
+        await state.ReadStateAsync();
+        var read = state.State;
+        if (read == null)
+        {
+            return await RebuildStateAsync();
+        }
+        return read.ToOrleansAggregate();
     }
 
     public Task<IAggregateProjector> GetProjectorAsync()
@@ -28,19 +32,20 @@ public class AggregateProjectorGrain(
 
     public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable orleansCommand)
     {
-        ICommandWithHandlerSerializable command = orleansCommand as ICommandWithHandlerSerializable ?? throw new ArgumentException("Invalid command type");
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         this.GetPrimaryKeyString();
         var commandExecutor = new CommandExecutor() {EventTypes = typeConverters.EventTypes };
-        var result = await commandExecutor.ExecuteGeneralNonGeneric(command, partitionKeysAndProjector.Projector, partitionKeysAndProjector.PartitionKeys, NoInjection.Empty, command.GetHandler(), command.GetAggregatePayloadType());
+        var result = await commandExecutor.ExecuteGeneralNonGeneric(orleansCommand, partitionKeysAndProjector.Projector, partitionKeysAndProjector.PartitionKeys, NoInjection.Empty, orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType());
         var aggregate = Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
         state.State = aggregate;
         await state.WriteStateAsync();
         return result.UnwrapBox().ToOrleansCommandResponse();
     }
 
-    public async Task<IAggregatePayload> RebuildStateAsync()
+    public async Task<OrleansAggregate> RebuildStateAsync()
     {
-        throw new System.NotImplementedException();
+        var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
+        var state = Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
+        return await Task.FromResult(state.ToOrleansAggregate());
     }
 }
