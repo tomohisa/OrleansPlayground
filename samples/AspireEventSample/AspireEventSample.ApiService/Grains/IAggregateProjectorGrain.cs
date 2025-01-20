@@ -32,6 +32,6 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     /// すべてのイベントを AggregateEventHandler から受け取り、Projector ロジックを通して再構成。
     /// </summary>
     /// <returns>再構築後の新しい状態</returns>
-    // Task<IAggregatePayload> RebuildStateAsync();
+    Task<OrleansAggregate> RebuildStateAsync();
 }
 
