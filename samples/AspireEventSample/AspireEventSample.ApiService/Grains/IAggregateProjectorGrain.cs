@@ -3,11 +3,14 @@ using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Projectors;
 
 namespace AspireEventSample.ApiService.Grains;
 
 public interface IAggregateProjectorGrain : IGrainWithStringKey
 {
+    public Task<IAggregateProjector> GetProjectorAsync();
+    
     /// <summary>
     /// 現在の状態を取得する。
     /// Stateが未作成の場合や、Projectorのバージョンが変わっている場合などは、
@@ -22,7 +25,7 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     /// </summary>
     /// <param name="command">実行するコマンド</param>
     /// <returns>実行後の状態や生成イベントなど、必要に応じて返す</returns>
-    Task<OrleansCommandResponse> ExecuteCommandAsync(OrleansCommand command);
+    Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable command);
 
     /// <summary>
     /// State を一から再構築する(バージョンアップ時や State 破損時など)。

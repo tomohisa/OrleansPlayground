@@ -1,5 +1,6 @@
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
+using Scalar.AspNetCore;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.OrleansEventSourcing;
 
@@ -27,7 +28,7 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapDefaultEndpoints();
+    app.MapScalarApiReference();
 }
 
 string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
@@ -50,10 +51,11 @@ app.MapDefaultEndpoints();
 
 // Add new app.MapPost() method here
 app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromServices]IClusterClient clusterClient) =>
-{
-    var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>("");
+    {
+    var partitionKeyAndProjector = new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
+    var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
     OrleansCommand orleansCommand = new OrleansCommand(command.ToString());
-    await aggregateProjectorGrain.ExecuteCommandAsync(orleansCommand);
+    await aggregateProjectorGrain.ExecuteCommandAsync(command);
 }).WithName("RegisterBranch")
     .WithOpenApi();
 

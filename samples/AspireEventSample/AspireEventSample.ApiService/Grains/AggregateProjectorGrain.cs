@@ -3,6 +3,7 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Repositories;
 
 namespace AspireEventSample.ApiService.Grains;
@@ -15,7 +16,14 @@ public class AggregateProjectorGrain(
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         return Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
     }
-    public async Task<OrleansCommandResponse> ExecuteCommandAsync(OrleansCommand orleansCommand)
+
+    public Task<IAggregateProjector> GetProjectorAsync()
+    {
+        return Task.FromResult(PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox()
+            .Projector);
+    }
+
+    public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable orleansCommand)
     {
         ICommandWithHandlerSerializable command = orleansCommand as ICommandWithHandlerSerializable ?? throw new ArgumentException("Invalid command type");
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
