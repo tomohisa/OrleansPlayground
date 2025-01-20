@@ -34,9 +34,12 @@ public class AggregateProjectorGrain(
     public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable orleansCommand)
     {
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
-        this.GetPrimaryKeyString();
+        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(partitionKeysAndProjector.ToEventHandlerGrainKey());
+        var orleansRepository = new OrleansRepository(eventGrain, partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector);
         var commandExecutor = new CommandExecutor() {EventTypes = typeConverters.EventTypes };
-        var result = await commandExecutor.ExecuteGeneralNonGeneric(orleansCommand, partitionKeysAndProjector.Projector, partitionKeysAndProjector.PartitionKeys, NoInjection.Empty, orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType());
+        var result = await commandExecutor.ExecuteGeneralNonGeneric(orleansCommand, 
+            partitionKeysAndProjector.Projector, partitionKeysAndProjector.PartitionKeys, NoInjection.Empty, 
+            orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType(),(_, _) => orleansRepository.Load(), orleansRepository.Save );
         var aggregate = Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
         state.State = aggregate;
         await state.WriteStateAsync();

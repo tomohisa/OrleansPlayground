@@ -1,5 +1,5 @@
 using Sekiban.Pure.Events;
 
 namespace AspireEventSample.ApiService.Grains;
-
-public record BranchCreated(string Name) : IEventPayload;
+[GenerateSerializer]
+public record BranchCreated([property: Id(0)]string Name) : IEventPayload;
