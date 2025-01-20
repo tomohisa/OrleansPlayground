@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure", "Sekiban.Pur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.OrleansEventSourcing", "Sekiban.Pure.OrleansEventSourcing\Sekiban.Pure.OrleansEventSourcing.csproj", "{CD794286-93A1-47E7-A23C-9E9691059A74}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.SourceGenerator", "Sekiban.Pure.SourceGenerator\Sekiban.Pure.SourceGenerator.csproj", "{F8554D19-89FD-43CD-8481-902AE94E219F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{CD794286-93A1-47E7-A23C-9E9691059A74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD794286-93A1-47E7-A23C-9E9691059A74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD794286-93A1-47E7-A23C-9E9691059A74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8554D19-89FD-43CD-8481-902AE94E219F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8554D19-89FD-43CD-8481-902AE94E219F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8554D19-89FD-43CD-8481-902AE94E219F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8554D19-89FD-43CD-8481-902AE94E219F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

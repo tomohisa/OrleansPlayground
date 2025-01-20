@@ -2,6 +2,7 @@ using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
 using Scalar.AspNetCore;
 using Sekiban.Pure.Command.Executor;
+using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,9 +56,27 @@ app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromSer
     var partitionKeyAndProjector = new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
     var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
     OrleansCommand orleansCommand = new OrleansCommand(command.ToString());
-    await aggregateProjectorGrain.ExecuteCommandAsync(command);
+    return await aggregateProjectorGrain.ExecuteCommandAsync(command);
+    
 }).WithName("RegisterBranch")
     .WithOpenApi();
+app.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [FromServices]IClusterClient clusterClient) =>
+    {
+    var partitionKeyAndProjector = new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
+    var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
+    OrleansCommand orleansCommand = new OrleansCommand(command.ToString());
+    return await aggregateProjectorGrain.ExecuteCommandAsync(command);
+}).WithName("ChangeBranchName")
+    .WithOpenApi();
+
+app.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient) =>
+    {
+    var partitionKeyAndProjector = new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
+    var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
+    return await aggregateProjectorGrain.ge();
+}).WithName("GetBranch")
+    .WithOpenApi();
+
 
 app.Run();
 

@@ -52,7 +52,7 @@ public class CommandExecutor : ICommandExecutor
         var aggregatePayloadTypeValue = aggregatePayloadType.HasValue
             ? aggregatePayloadType.GetValue()
             : typeof(IAggregatePayload);
-        var method = GetType().GetMethod(nameof(ExecuteGeneral), BindingFlags.Public | BindingFlags.Instance);
+        var method = GetType().GetMethod(nameof(ExecuteGeneralWithPartitionKeys), BindingFlags.Public | BindingFlags.Instance);
         if (method is null) { return new SekibanCommandHandlerNotMatchException("Method not found"); }
         var genericMethod = method.MakeGenericMethod(commandType, injectType, aggregatePayloadTypeValue);
         var result = genericMethod.Invoke(
@@ -86,7 +86,7 @@ public class CommandExecutor : ICommandExecutor
         var aggregatePayloadTypeValue = aggregatePayloadType.HasValue
             ? aggregatePayloadType.GetValue()
             : typeof(IAggregatePayload);
-        var method = GetType().GetMethod(nameof(ExecuteGeneral), BindingFlags.Public | BindingFlags.Instance);
+        var method = GetType().GetMethod(nameof(ExecuteGeneralWithPartitionKeys), BindingFlags.Public | BindingFlags.Instance);
         if (method is null) { return new SekibanCommandHandlerNotMatchException("Method not found"); }
         var genericMethod = method.MakeGenericMethod(commandType, injectType, aggregatePayloadTypeValue);
         var result = genericMethod.Invoke(
@@ -106,11 +106,11 @@ public class CommandExecutor : ICommandExecutor
         Delegate handler) where TCommand : ICommand where TAggregatePayload : IAggregatePayload =>
         specifyPartitionKeys(command)
             .ToResultBox().Conveyor(partitionKeys =>
-                ExecuteGeneral<TCommand, TInject, TAggregatePayload>(command, projector, partitionKeys, inject,
+                ExecuteGeneralWithPartitionKeys<TCommand, TInject, TAggregatePayload>(command, projector, partitionKeys, inject,
                     handler));
     
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(CommandExecutor))]
-    public Task<ResultBox<CommandResponse>> ExecuteGeneral<TCommand, TInject, TAggregatePayload>(
+    public Task<ResultBox<CommandResponse>> ExecuteGeneralWithPartitionKeys<TCommand, TInject, TAggregatePayload>(
         TCommand command,
         IAggregateProjector projector,
         PartitionKeys partitionKeys,

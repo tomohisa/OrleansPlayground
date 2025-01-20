@@ -17,7 +17,7 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     /// イベントを一括取得して再構築することを考慮。
     /// </summary>
     /// <returns>現在の集約状態</returns>
-    // Task<IAggregate> GetStateAsync();
+    Task<IAggregate> GetStateAsync();
 
     /// <summary>
     /// コマンドを実行するエントリポイント。
