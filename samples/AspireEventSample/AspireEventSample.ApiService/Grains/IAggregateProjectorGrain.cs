@@ -2,11 +2,15 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
+using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Projectors;
 
 namespace AspireEventSample.ApiService.Grains;
 
 public interface IAggregateProjectorGrain : IGrainWithStringKey
 {
+    public Task<IAggregateProjector> GetProjectorAsync();
+    
     /// <summary>
     /// 現在の状態を取得する。
     /// Stateが未作成の場合や、Projectorのバージョンが変わっている場合などは、
@@ -21,7 +25,7 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     /// </summary>
     /// <param name="command">実行するコマンド</param>
     /// <returns>実行後の状態や生成イベントなど、必要に応じて返す</returns>
-    Task<OrleansCommandResponse> ExecuteCommandAsync(OrleansCommand command);
+    Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable command);
 
     /// <summary>
     /// State を一から再構築する(バージョンアップ時や State 破損時など)。
@@ -31,29 +35,3 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     // Task<IAggregatePayload> RebuildStateAsync();
 }
 
-[GenerateSerializer]
-public record OrleansCommandResponse([property:Id(0)]OrleansPartitionKeys PartitionKeys, [property:Id(1)]List<string> Events, [property:Id(2)]int Version)
-{
-}
-
-[GenerateSerializer]
-public record OrleansPartitionKeys(
-    [property: Id(0)] Guid AggregateId,
-    [property: Id(1)] string Group,
-    [property: Id(2)] string RootPartitionKey);
-
-
-[GenerateSerializer]
-public record OrleansCommand([property:Id(0)]string payload);
-
-public static class PartitionKeysExtensions
-{
-    public static OrleansPartitionKeys ToOrleansPartitionKeys(this PartitionKeys partitionKeys) =>
-        new(partitionKeys.AggregateId, partitionKeys.Group, partitionKeys.RootPartitionKey);
-}
-
-public static class CommandResponseExtensions
-{
-    public static OrleansCommandResponse ToOrleansCommandResponse(this CommandResponse response) =>
-        new(response.PartitionKeys.ToOrleansPartitionKeys(), response.Events.Select(e => e.ToString() ?? String.Empty).ToList(), response.Version);
-}

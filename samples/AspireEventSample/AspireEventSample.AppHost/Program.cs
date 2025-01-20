@@ -9,7 +9,7 @@ var orleans = builder.AddOrleans("default")
     .WithGrainStorage("Default", grainStorage);
 
 var apiService = builder.AddProject<Projects.AspireEventSample_ApiService>("apiservice")
-    .WithExternalHttpEndpoints()
+    .WithEndpoint("https", annotation => annotation.IsProxied = false)
     .WithReference(orleans);
 
 builder.AddProject<Projects.AspireEventSample_Web>("webfrontend")

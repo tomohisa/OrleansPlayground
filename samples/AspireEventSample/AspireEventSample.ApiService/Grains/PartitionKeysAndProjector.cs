@@ -17,4 +17,7 @@ public record PartitionKeysAndProjector(PartitionKeys PartitionKeys, IAggregateP
         var projectorSpecifier = new MyAggregateProjectorSpecifier();
         return projectorSpecifier.GetProjector(splitted[1]).Remap(projector => new PartitionKeysAndProjector(partitionKeys, projector));
     }
+    
+    public string ToProjectorGrainKey() => $"{PartitionKeys.ToPrimaryKeysString()}={Projector.GetType().Name}";
+    public string ToEventHandlerGrainKey() => PartitionKeys.ToPrimaryKeysString();
 }
