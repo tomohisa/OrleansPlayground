@@ -24,11 +24,14 @@ public record OrleansAggregate(
     [property:Id(0)]IAggregatePayload Payload,
     [property:Id(1)]OrleansPartitionKeys PartitionKeys,
     [property:Id(2)]int Version,
-    [property:Id(3)]string LastSortableUniqueId) 
+    [property:Id(3)]string LastSortableUniqueId,
+    [property:Id(4)]string ProjectorVersion,
+    [property:Id(5)]string ProjectorTypeName,
+    [property:Id(6)]string PayloadTypeName) 
 {
     public static OrleansAggregate FromAggregate(IAggregate aggregate)
         => new OrleansAggregate(aggregate.GetPayload(), aggregate.PartitionKeys.ToOrleansPartitionKeys(), aggregate.Version,
-            aggregate.LastSortableUniqueId);
+            aggregate.LastSortableUniqueId, aggregate.ProjectorVersion, aggregate.ProjectorTypeName, aggregate.PayloadTypeName);
     
     public ResultBox<OrleansAggregate<TAggregatePayload>> ToTypedPayload<TAggregatePayload>()
         where TAggregatePayload : IAggregatePayload => Payload is TAggregatePayload typedPayload
@@ -42,8 +45,8 @@ public static class OrleansAggregateExtensions
     public static OrleansAggregate ToOrleansAggregate(this IAggregate aggregate)
     {
         return new OrleansAggregate(aggregate.GetPayload(), aggregate.PartitionKeys.ToOrleansPartitionKeys(), aggregate.Version,
-            aggregate.LastSortableUniqueId);
+            aggregate.LastSortableUniqueId, aggregate.ProjectorVersion, aggregate.ProjectorTypeName, aggregate.PayloadTypeName);
     }
     public static Aggregate ToAggregate(this OrleansAggregate oAggregate)
-        => new Aggregate(oAggregate.Payload, oAggregate.PartitionKeys.ToPartitionKeys(), oAggregate.Version, oAggregate.LastSortableUniqueId);
+        => new Aggregate(oAggregate.Payload, oAggregate.PartitionKeys.ToPartitionKeys(), oAggregate.Version, oAggregate.LastSortableUniqueId, oAggregate.ProjectorVersion, oAggregate.ProjectorTypeName, oAggregate.PayloadTypeName);
 }

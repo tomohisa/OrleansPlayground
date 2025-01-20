@@ -15,9 +15,10 @@ public class AggregateProjectorGrain(
 {
     public async Task<OrleansAggregate> GetStateAsync()
     {
+        var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         await state.ReadStateAsync();
         var read = state.State;
-        if (read == null)
+        if (read == null || partitionKeysAndProjector.Projector.GetVersion() != read.ProjectorVersion)
         {
             return await RebuildStateAsync();
         }
