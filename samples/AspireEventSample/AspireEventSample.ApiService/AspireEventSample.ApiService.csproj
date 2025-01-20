@@ -9,6 +9,11 @@
   <ItemGroup>
     <ProjectReference Include="..\AspireEventSample.ServiceDefaults\AspireEventSample.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Sekiban.Pure.OrleansEventSourcing\Sekiban.Pure.OrleansEventSourcing.csproj" />
+    <ProjectReference Include="..\Sekiban.Pure.SourceGenerator\Sekiban.Pure.SourceGenerator.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
     <ProjectReference Include="..\Sekiban.Pure\Sekiban.Pure.csproj" />
   </ItemGroup>
 
