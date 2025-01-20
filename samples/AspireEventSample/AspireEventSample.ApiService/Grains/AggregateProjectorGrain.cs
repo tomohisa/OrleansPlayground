@@ -6,11 +6,12 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Repositories;
+using Sekiban.Pure.Types;
 
 namespace AspireEventSample.ApiService.Grains;
 
 public class AggregateProjectorGrain(
-    [PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<Aggregate> state) : Grain, IAggregateProjectorGrain
+    [PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<Aggregate> state, SekibanTypeConverters typeConverters) : Grain, IAggregateProjectorGrain
 {
     public async Task<OrleansAggregate> GetStateAsync()
     {
@@ -30,7 +31,7 @@ public class AggregateProjectorGrain(
         ICommandWithHandlerSerializable command = orleansCommand as ICommandWithHandlerSerializable ?? throw new ArgumentException("Invalid command type");
         var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         this.GetPrimaryKeyString();
-        var commandExecutor = new CommandExecutor() {EventTypes = new AspireEventSampleApiServiceEventTypes()};
+        var commandExecutor = new CommandExecutor() {EventTypes = typeConverters.EventTypes };
         var result = await commandExecutor.ExecuteGeneralNonGeneric(command, partitionKeysAndProjector.Projector, partitionKeysAndProjector.PartitionKeys, NoInjection.Empty, command.GetHandler(), command.GetAggregatePayloadType());
         var aggregate = Repository.Load(partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector).UnwrapBox();
         state.State = aggregate;

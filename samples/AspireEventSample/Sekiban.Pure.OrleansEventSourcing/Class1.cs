@@ -16,7 +16,10 @@ public record OrleansCommandResponse([property:Id(0)]OrleansPartitionKeys Partit
 public record OrleansPartitionKeys(
     [property: Id(0)] Guid AggregateId,
     [property: Id(1)] string Group,
-    [property: Id(2)] string RootPartitionKey);
+    [property: Id(2)] string RootPartitionKey)
+{
+    public PartitionKeys ToPartitionKeys() => new(AggregateId, Group, RootPartitionKey);
+}
 
 
 [GenerateSerializer]

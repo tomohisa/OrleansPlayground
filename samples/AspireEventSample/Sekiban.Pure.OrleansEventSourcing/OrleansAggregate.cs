@@ -44,4 +44,6 @@ public static class OrleansAggregateExtensions
         return new OrleansAggregate(aggregate.GetPayload(), aggregate.PartitionKeys.ToOrleansPartitionKeys(), aggregate.Version,
             aggregate.LastSortableUniqueId);
     }
+    public static Aggregate ToAggregate(this OrleansAggregate oAggregate)
+        => new Aggregate(oAggregate.Payload, oAggregate.PartitionKeys.ToPartitionKeys(), oAggregate.Version, oAggregate.LastSortableUniqueId);
 }
