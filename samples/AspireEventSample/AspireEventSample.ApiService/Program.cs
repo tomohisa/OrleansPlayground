@@ -27,7 +27,7 @@ builder.AddKeyedAzureBlobClient("grain-state");
 builder.UseOrleans();
 
 builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApiServiceAggregateTypes(),
-    new AspireEventSampleApiServiceEventTypes()));
+    new AspireEventSampleApiServiceEventTypes(), new AspireEventSampleApiServiceAggregateProjectorSpecifier()));
 
 var app = builder.Build();
 

@@ -13,32 +13,32 @@ namespace AspireEventSample.ApiService.Grains;
 public class AggregateProjectorGrain(
     [PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<Aggregate> state, SekibanTypeConverters typeConverters) : Grain, IAggregateProjectorGrain
 {
+    private OptionalValue<PartitionKeysAndProjector> _partitionKeysAndProjector = OptionalValue<PartitionKeysAndProjector>.Empty;
+
+    private PartitionKeysAndProjector GetPartitionKeysAndProjector()
+    {
+        if (_partitionKeysAndProjector.HasValue) return _partitionKeysAndProjector.GetValue();
+        _partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString(), typeConverters.AggregateProjectorSpecifier).UnwrapBox();
+        return _partitionKeysAndProjector.GetValue();
+    }
     public async Task<OrleansAggregate> GetStateAsync()
     {
-        var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
         await state.ReadStateAsync();
         var read = state.State;
-        if (read == null || partitionKeysAndProjector.Projector.GetVersion() != read.ProjectorVersion)
+        if (read == null || GetPartitionKeysAndProjector().Projector.GetVersion() != read.ProjectorVersion)
         {
             return await RebuildStateAsync();
         }
         return read.ToOrleansAggregate();
     }
 
-    public Task<IAggregateProjector> GetProjectorAsync()
-    {
-        return Task.FromResult(PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox()
-            .Projector);
-    }
-
     public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable orleansCommand)
     {
-        var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
-        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(partitionKeysAndProjector.ToEventHandlerGrainKey());
-        var orleansRepository = new OrleansRepository(eventGrain, partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector, typeConverters.EventTypes);
+        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
+        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes);
         var commandExecutor = new CommandExecutor() {EventTypes = typeConverters.EventTypes };
         var result = await commandExecutor.ExecuteGeneralNonGeneric(orleansCommand, 
-            partitionKeysAndProjector.Projector, partitionKeysAndProjector.PartitionKeys, NoInjection.Empty, 
+            GetPartitionKeysAndProjector().Projector, GetPartitionKeysAndProjector().PartitionKeys, NoInjection.Empty, 
             orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType(),(_, _) => orleansRepository.Load(), orleansRepository.Save );
         // best if just use events to update state
         var aggregate = await orleansRepository.Load().UnwrapBox();
@@ -49,9 +49,8 @@ public class AggregateProjectorGrain(
 
     public async Task<OrleansAggregate> RebuildStateAsync()
     {
-        var partitionKeysAndProjector = PartitionKeysAndProjector.FromGrainKey(this.GetPrimaryKeyString()).UnwrapBox();
-        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(partitionKeysAndProjector.ToEventHandlerGrainKey());
-        var orleansRepository = new OrleansRepository(eventGrain, partitionKeysAndProjector.PartitionKeys, partitionKeysAndProjector.Projector, typeConverters.EventTypes);
+        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
+        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes);
         var aggregate = await orleansRepository.Load().UnwrapBox();
         state.State = aggregate;
         await state.WriteStateAsync();
