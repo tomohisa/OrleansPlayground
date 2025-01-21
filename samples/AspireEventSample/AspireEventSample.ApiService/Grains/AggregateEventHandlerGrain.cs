@@ -8,22 +8,28 @@ namespace AspireEventSample.ApiService.Grains;
 
 public class AggregateEventHandlerGrain : Grain, IAggregateEventHandlerGrain
 {
-    private readonly List<OrleansEvent> _events = new();
+    private List<OrleansEvent> _events = new();
 
     public Task<string> AppendEventsAsync(
         string expectedLastSortableUniqueId,
         IReadOnlyList<OrleansEvent> newEvents
     )
     {
-        if (expectedLastSortableUniqueId != null && 
+        var sortedEvents = newEvents.OrderBy(m => m.SortableUniqueId).ToList();
+        if (string.IsNullOrWhiteSpace(expectedLastSortableUniqueId) && 
             _events.Count > 0 &&
             _events.Last().SortableUniqueId != expectedLastSortableUniqueId)
         {
             throw new InvalidCastException("Expected last event ID does not match");
         }
-
-        _events.AddRange(newEvents);
-
+        // if last sortable unique id is not empty and it is later than newEvents, throw exception
+        if (_events.Any() &&
+            sortedEvents.Any() &&
+            String.Compare(_events.Last().SortableUniqueId, sortedEvents.First().SortableUniqueId, StringComparison.Ordinal) > 0)
+        {
+            throw new InvalidCastException("Expected last event ID is later than new events");
+        }
+        _events.AddRange(sortedEvents);
         return Task.FromResult(_events.Last().SortableUniqueId);
     }
 
