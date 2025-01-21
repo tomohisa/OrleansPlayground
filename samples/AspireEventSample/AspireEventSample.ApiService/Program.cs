@@ -1,3 +1,4 @@
+using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,7 @@ builder.AddKeyedAzureBlobClient("grain-state");
 builder.UseOrleans(config => config.UseDashboard(options => {  }));
 
 builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApiServiceAggregateTypes(),
-    new AspireEventSampleApiServiceEventTypes()));
+    new AspireEventSampleApiServiceEventTypes(), new AspireEventSampleApiServiceAggregateProjectorSpecifier()));
 
 var app = builder.Build();
 
