@@ -14,9 +14,9 @@ public class OrleansRepository(IAggregateEventHandlerGrain eventHandlerGrain, Pa
     public Task<ResultBox<Aggregate>> Load()
         => aggregate.ToResultBox().ToTask();
 
-    public Task<ResultBox<UnitValue>> Save(string lastSortableUniqueId, List<IEvent> events)
+    public Task<ResultBox<List<IEvent>>> Save(string lastSortableUniqueId, List<IEvent> events)
         => ResultBox.WrapTry(() => eventHandlerGrain.AppendEventsAsync(lastSortableUniqueId, events.ToOrleansEvents()))
-            .Remap(_ => UnitValue.Unit);
+            .Conveyor(savedEvents => savedEvents.ToList().ToEvents(eventTypes).ToResultBox());
     
     public ResultBox<Aggregate> GetProjectedAggregate(List<IEvent> events)
         => aggregate.Project(events, projector);

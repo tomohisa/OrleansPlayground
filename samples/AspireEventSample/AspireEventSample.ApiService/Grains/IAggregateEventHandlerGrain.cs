@@ -16,7 +16,7 @@ public interface IAggregateEventHandlerGrain : IGrainWithStringKey
     ///   (成功時) 新たな LastSortableUniqueId  
     ///   (失敗時) 例外をスローする or もしくは差分イベントを返す別パターンなど
     /// </returns>
-    Task<string> AppendEventsAsync(
+    Task<IReadOnlyList<OrleansEvent>> AppendEventsAsync(
         string expectedLastSortableUniqueId,
         IReadOnlyList<OrleansEvent> newEvents
     );
