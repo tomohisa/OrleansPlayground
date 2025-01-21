@@ -29,24 +29,15 @@ public record OrleansAggregate(
     [property:Id(5)]string ProjectorTypeName,
     [property:Id(6)]string PayloadTypeName) 
 {
-    public static OrleansAggregate FromAggregate(IAggregate aggregate)
-        => new OrleansAggregate(aggregate.GetPayload(), aggregate.PartitionKeys.ToOrleansPartitionKeys(), aggregate.Version,
-            aggregate.LastSortableUniqueId, aggregate.ProjectorVersion, aggregate.ProjectorTypeName, aggregate.PayloadTypeName);
-    
+    public static IAggregatePayload ConvertPayload(IAggregatePayload payload) => payload switch
+    {
+        EmptyAggregatePayload => new OrleansEmptyAggregatePayload(),
+        OrleansEmptyAggregatePayload => new EmptyAggregatePayload(),
+        _ => payload
+    };
     public ResultBox<OrleansAggregate<TAggregatePayload>> ToTypedPayload<TAggregatePayload>()
         where TAggregatePayload : IAggregatePayload => Payload is TAggregatePayload typedPayload
         ? ResultBox.FromValue(
             new OrleansAggregate<TAggregatePayload>(typedPayload, PartitionKeys, Version, LastSortableUniqueId))
         : new SekibanAggregateTypeException("Payload is not typed to " + typeof(TAggregatePayload).Name);
-}
-
-public static class OrleansAggregateExtensions
-{
-    public static OrleansAggregate ToOrleansAggregate(this IAggregate aggregate)
-    {
-        return new OrleansAggregate(aggregate.GetPayload(), aggregate.PartitionKeys.ToOrleansPartitionKeys(), aggregate.Version,
-            aggregate.LastSortableUniqueId, aggregate.ProjectorVersion, aggregate.ProjectorTypeName, aggregate.PayloadTypeName);
-    }
-    public static Aggregate ToAggregate(this OrleansAggregate oAggregate)
-        => new Aggregate(oAggregate.Payload, oAggregate.PartitionKeys.ToPartitionKeys(), oAggregate.Version, oAggregate.LastSortableUniqueId, oAggregate.ProjectorVersion, oAggregate.ProjectorTypeName, oAggregate.PayloadTypeName);
 }

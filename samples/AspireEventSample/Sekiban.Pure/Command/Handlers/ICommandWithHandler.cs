@@ -26,10 +26,3 @@ public interface
     Delegate ICommandWithHandlerSerializable.GetPartitionKeysSpecifier() => SpecifyPartitionKeys;
     OptionalValue<Type> ICommandWithHandlerSerializable.GetAggregatePayloadType() => typeof(TAggregatePayload).Name == nameof(IAggregatePayload) ? OptionalValue<Type>.Empty : new OptionalValue<Type>(typeof(TAggregatePayload));
 }
-
-public interface ICommandWithHandlerSerializable: ICommandGetProjector,ICommand
-{
-    public Delegate GetHandler();
-    public Delegate GetPartitionKeysSpecifier();
-    public OptionalValue<Type> GetAggregatePayloadType();
-}
