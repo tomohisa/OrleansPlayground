@@ -2,7 +2,7 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace AspireEventSample.ApiService.Aggregates.Branches;
 
 public class BranchProjector : IAggregateProjector
 {

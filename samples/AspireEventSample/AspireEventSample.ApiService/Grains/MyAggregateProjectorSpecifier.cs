@@ -1,3 +1,5 @@
+using AspireEventSample.ApiService.Aggregates.Branches;
+using AspireEventSample.ApiService.Aggregates.Carts;
 using ResultBoxes;
 using Sekiban.Pure.Projectors;
 
@@ -10,6 +12,7 @@ public class MyAggregateProjectorSpecifier : IAggregateProjectorSpecifier
         return projectorName switch
         {
             nameof(BranchProjector) => new BranchProjector(),
+            nameof(ShoppingCartProjector) => new ShoppingCartProjector(),
             _ => new ResultsInvalidOperationException("unknown projector")
         };
     }

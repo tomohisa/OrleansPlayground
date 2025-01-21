@@ -5,7 +5,7 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace AspireEventSample.ApiService.Aggregates.Branches;
 
 [GenerateSerializer]
 public record ChangeBranchName(Guid BranchId, string NameToChange)

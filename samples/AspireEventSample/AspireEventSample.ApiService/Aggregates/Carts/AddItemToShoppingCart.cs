@@ -1,3 +1,4 @@
+using AspireEventSample.ApiService.Grains;
 using ResultBoxes;
 using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
@@ -5,7 +6,7 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace AspireEventSample.ApiService.Aggregates.Carts;
 
 public record AddItemToShoppingCart(Guid ShoppingCartId, string Name, int Quantity, Guid ItemId, int Price) : ICommandWithHandlerAsync<AddItemToShoppingCart, ShoppingCartProjector>
 {

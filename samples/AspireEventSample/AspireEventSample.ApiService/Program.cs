@@ -1,3 +1,4 @@
+using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;

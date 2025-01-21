@@ -2,7 +2,7 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace AspireEventSample.ApiService.Aggregates.Carts;
 
 public class ShoppingCartProjector : IAggregateProjector
 {
@@ -18,8 +18,8 @@ public class ShoppingCartProjector : IAggregateProjector
                     .Items
                     .Append(new ShoppingCartItems(added.Name, added.Quantity, added.ItemId, added.Price))
                     .ToList()),
-            (BuyingShoppingCart buyingShoppingCart, PaymentProcessedShoppingCart processed) =>
-                new EmptyAggregatePayload(),
+            (BuyingShoppingCart buyingShoppingCart, ShoppingCartPaymentProcessed processed) =>
+                new PaymentProcessingShoppingCart(buyingShoppingCart.UserId, buyingShoppingCart.Items, processed.PaymentMethod),
             _ => payload
         };
 }
