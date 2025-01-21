@@ -3,19 +3,20 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Types;
 
 namespace AspireEventSample.ApiService.Grains;
 
-public class AggregateEventHandlerGrain : Grain, IAggregateEventHandlerGrain
+public class AggregateEventHandlerGrain(SekibanTypeConverters typeConverters) : Grain, IAggregateEventHandlerGrain
 {
-    private List<OrleansEvent> _events = new();
+    private List<IEvent> _events = new();
 
-    public Task<string> AppendEventsAsync(
+    public async Task<IReadOnlyList<OrleansEvent>> AppendEventsAsync(
         string expectedLastSortableUniqueId,
         IReadOnlyList<OrleansEvent> newEvents
     )
     {
-        var sortedEvents = newEvents.OrderBy(m => m.SortableUniqueId).ToList();
+        var toStoreEvents = newEvents.ToList().ToEventsAndReplaceTime(typeConverters.EventTypes);
         if (string.IsNullOrWhiteSpace(expectedLastSortableUniqueId) && 
             _events.Count > 0 &&
             _events.Last().SortableUniqueId != expectedLastSortableUniqueId)
@@ -24,14 +25,15 @@ public class AggregateEventHandlerGrain : Grain, IAggregateEventHandlerGrain
         }
         // if last sortable unique id is not empty and it is later than newEvents, throw exception
         if (_events.Any() &&
-            sortedEvents.Any() &&
-            String.Compare(_events.Last().SortableUniqueId, sortedEvents.First().SortableUniqueId, StringComparison.Ordinal) > 0)
+            toStoreEvents.Any() &&
+            String.Compare(_events.Last().SortableUniqueId, toStoreEvents.First().SortableUniqueId, StringComparison.Ordinal) > 0)
         {
             throw new InvalidCastException("Expected last event ID is later than new events");
         }
-        _events.AddRange(sortedEvents);
-        return Task.FromResult(_events.Last().SortableUniqueId);
+        _events.AddRange(toStoreEvents);
+        return await Task.FromResult(toStoreEvents.ToOrleansEvents());
     }
+
 
     public Task<IReadOnlyList<OrleansEvent>> GetDeltaEventsAsync(
         string fromSortableUniqueId,

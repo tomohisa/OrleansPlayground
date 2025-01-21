@@ -14,12 +14,33 @@ public class AggregateProjectorGrain(
     [PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<Aggregate> state, SekibanTypeConverters typeConverters) : Grain, IAggregateProjectorGrain
 {
     private OptionalValue<PartitionKeysAndProjector> _partitionKeysAndProjector = OptionalValue<PartitionKeysAndProjector>.Empty;
-
+    private bool UpdatedAfterWrite { get; set; } = false;
+    private IGrainTimer _timer;
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await base.OnActivateAsync(cancellationToken);
         // アクティベーション時に読み込み
         await state.ReadStateAsync();
+
+        _timer = this.RegisterGrainTimer(callback, state, new() { DueTime = TimeSpan.FromSeconds(10), Period = TimeSpan.FromSeconds(10), Interleave = true });
+    }
+    public async Task callback(object currentState)
+    {
+        if (UpdatedAfterWrite)
+        {
+            await state.WriteStateAsync();
+            UpdatedAfterWrite = false;
+        }
+    }
+
+    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
+    {
+        await base.OnDeactivateAsync(reason, cancellationToken);
+        if (UpdatedAfterWrite)
+        {
+            await state.WriteStateAsync();
+            UpdatedAfterWrite = false;
+        }
     }
 
     private PartitionKeysAndProjector GetPartitionKeysAndProjector()
@@ -61,7 +82,7 @@ public class AggregateProjectorGrain(
             GetPartitionKeysAndProjector().Projector, GetPartitionKeysAndProjector().PartitionKeys, NoInjection.Empty, 
             orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType(),(_, _) => orleansRepository.Load(), orleansRepository.Save ).UnwrapBox();
         state.State = orleansRepository.GetProjectedAggregate(result.Events).UnwrapBox();
-        await state.WriteStateAsync();
+        UpdatedAfterWrite = true;
         return result.ToOrleansCommandResponse();
     }
 

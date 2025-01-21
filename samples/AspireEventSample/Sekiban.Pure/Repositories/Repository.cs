@@ -19,7 +19,7 @@ public class Repository
                 Events.Where(e => e.PartitionKeys.Equals(partitionKeys)).OrderBy(e => e.SortableUniqueId).ToList())
             .Conveyor(events => Aggregate.EmptyFromPartitionKeys(partitionKeys).Project(events, projector));
 
-    public static ResultBox<UnitValue> Save(List<IEvent> events) => ResultBox.Start.Do(() => Events.AddRange(events));
+    public static ResultBox<List<IEvent>> Save(List<IEvent> events) => ResultBox.FromValue(events).Do(() => Events.AddRange(events));
 
     public static ResultBox<MultiProjectionState<TMultiProjection>> LoadMultiProjection<TMultiProjection>(
         IMultiProjectionEventSelector eventSelector) where TMultiProjection : IMultiProjector<TMultiProjection> =>

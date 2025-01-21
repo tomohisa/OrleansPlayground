@@ -72,7 +72,7 @@ public class CommandExecutor : ICommandExecutor
         PartitionKeys partitionKeys,
         object? inject,
         Delegate handler,
-        OptionalValue<Type> aggregatePayloadType,Func<PartitionKeys, IAggregateProjector,Task<ResultBox<Aggregate>>> loader, Func<string, List<IEvent>,Task<ResultBox<UnitValue>>> saver)
+        OptionalValue<Type> aggregatePayloadType,Func<PartitionKeys, IAggregateProjector,Task<ResultBox<Aggregate>>> loader, Func<string, List<IEvent>,Task<ResultBox<List<IEvent>>>> saver)
     {
         var commandType = command.GetType();
         var injectType = inject is not null ? inject.GetType() : typeof(NoInjection);
@@ -119,7 +119,7 @@ public class CommandExecutor : ICommandExecutor
         IAggregateProjector projector,
         PartitionKeys partitionKeys,
         OptionalValue<TInject> inject,
-        Delegate handler,Func<PartitionKeys, IAggregateProjector,Task<ResultBox<Aggregate>>> loader, Func<string, List<IEvent>,Task<ResultBox<UnitValue>>> saver) where TCommand : ICommand where TAggregatePayload : IAggregatePayload =>
+        Delegate handler,Func<PartitionKeys, IAggregateProjector,Task<ResultBox<Aggregate>>> loader, Func<string, List<IEvent>,Task<ResultBox<List<IEvent>>>> saver) where TCommand : ICommand where TAggregatePayload : IAggregatePayload =>
         ResultBox
             .Start
             .Conveyor(
@@ -131,14 +131,14 @@ public class CommandExecutor : ICommandExecutor
             .Combine(
                 context => RunHandler<TCommand, TInject, TAggregatePayload>(command, context, inject, handler)
                     .Conveyor(eventOrNone => EventToCommandExecuted(context, eventOrNone)))
-            .Conveyor(values => saver(values.Value1.OriginalSortableUniqueId, values.Value2.ProducedEvents).Remap(_ => values))
+            .Conveyor(values => saver(values.Value1.OriginalSortableUniqueId, values.Value2.ProducedEvents).Remap(savedEvent =>TwoValues.FromValues(values.Value1, savedEvent)))
             .Conveyor(
-                (context, executed) => ResultBox.FromValue(
+                (context, savedEvents) => ResultBox.FromValue(
                     new CommandResponse(
                         partitionKeys,
-                        executed.ProducedEvents,
-                        executed.ProducedEvents.Count > 0
-                            ? executed.ProducedEvents.Last().Version
+                        savedEvents,
+                        savedEvents.Count > 0
+                            ? savedEvents.Last().Version
                             : context.GetCurrentVersion())));
 
 
