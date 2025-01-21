@@ -9,8 +9,6 @@ namespace AspireEventSample.ApiService.Grains;
 
 public interface IAggregateProjectorGrain : IGrainWithStringKey
 {
-    public Task<IAggregateProjector> GetProjectorAsync();
-    
     /// <summary>
     /// 現在の状態を取得する。
     /// Stateが未作成の場合や、Projectorのバージョンが変わっている場合などは、

@@ -52,7 +52,9 @@ public class AggregateEventHandlerGrain : Grain, IAggregateEventHandlerGrain
     public Task<string> GetLastSortableUniqueIdAsync()
     {
         if (!_events.Any())
-            return Task.FromResult((string)null);
+        {
+            return Task.FromResult(String.Empty);
+        }
 
         return Task.FromResult(_events.Last().SortableUniqueId);
     }

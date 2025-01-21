@@ -1,7 +1,6 @@
 using ResultBoxes;
-using Sekiban.Pure.Projectors;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.Projectors;
 
 public interface IAggregateProjectorSpecifier
 {
