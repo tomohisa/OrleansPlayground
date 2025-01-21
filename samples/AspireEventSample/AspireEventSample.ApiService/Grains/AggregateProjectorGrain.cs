@@ -15,6 +15,13 @@ public class AggregateProjectorGrain(
 {
     private OptionalValue<PartitionKeysAndProjector> _partitionKeysAndProjector = OptionalValue<PartitionKeysAndProjector>.Empty;
 
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await base.OnActivateAsync(cancellationToken);
+        // アクティベーション時に読み込み
+        await state.ReadStateAsync();
+    }
+
     private PartitionKeysAndProjector GetPartitionKeysAndProjector()
     {
         if (_partitionKeysAndProjector.HasValue) return _partitionKeysAndProjector.GetValue();
@@ -31,29 +38,46 @@ public class AggregateProjectorGrain(
         }
         return read.ToOrleansAggregate();
     }
+    private async Task<Aggregate> GetState()
+    {
+        var read = state.State;
+        if (read == null || GetPartitionKeysAndProjector().Projector.GetVersion() != read.ProjectorVersion)
+        {
+            return await RebuildStateInternalAsync();
+        }
+        if (read.Version == 0)
+        {
+            return Aggregate.EmptyFromPartitionKeys(GetPartitionKeysAndProjector().PartitionKeys);
+        }
+        return read;
+    }
 
     public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable orleansCommand)
     {
         var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
-        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes);
+        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes, await GetState());
         var commandExecutor = new CommandExecutor() {EventTypes = typeConverters.EventTypes };
         var result = await commandExecutor.ExecuteGeneralNonGeneric(orleansCommand, 
             GetPartitionKeysAndProjector().Projector, GetPartitionKeysAndProjector().PartitionKeys, NoInjection.Empty, 
-            orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType(),(_, _) => orleansRepository.Load(), orleansRepository.Save );
-        // best if just use events to update state
+            orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType(),(_, _) => orleansRepository.Load(), orleansRepository.Save ).UnwrapBox();
+        state.State = orleansRepository.GetProjectedAggregate(result.Events).UnwrapBox();
+        await state.WriteStateAsync();
+        return result.ToOrleansCommandResponse();
+    }
+
+    private async Task<Aggregate> RebuildStateInternalAsync()
+    {
+        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
+        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes, Aggregate.EmptyFromPartitionKeys(GetPartitionKeysAndProjector().PartitionKeys));
         var aggregate = await orleansRepository.Load().UnwrapBox();
         state.State = aggregate;
         await state.WriteStateAsync();
-        return result.UnwrapBox().ToOrleansCommandResponse();
+        return aggregate;
     }
 
     public async Task<OrleansAggregate> RebuildStateAsync()
     {
-        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
-        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes);
-        var aggregate = await orleansRepository.Load().UnwrapBox();
-        state.State = aggregate;
-        await state.WriteStateAsync();
+        var aggregate = await RebuildStateInternalAsync();
         return aggregate.ToOrleansAggregate();
     }
 }
