@@ -2,16 +2,17 @@ using Sekiban.Pure.Events;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Sekiban.Pure.OrleansEventSourcing;
 
 namespace AspireEventSample.ApiService.Grains;
 
 public class AggregateEventHandlerGrain : Grain, IAggregateEventHandlerGrain
 {
-    private readonly List<IEvent> _events = new();
+    private readonly List<OrleansEvent> _events = new();
 
     public Task<string> AppendEventsAsync(
         string expectedLastSortableUniqueId,
-        IReadOnlyList<IEvent> newEvents
+        IReadOnlyList<OrleansEvent> newEvents
     )
     {
         if (expectedLastSortableUniqueId != null && 
@@ -26,7 +27,7 @@ public class AggregateEventHandlerGrain : Grain, IAggregateEventHandlerGrain
         return Task.FromResult(_events.Last().SortableUniqueId);
     }
 
-    public Task<IReadOnlyList<IEvent>> GetDeltaEventsAsync(
+    public Task<IReadOnlyList<OrleansEvent>> GetDeltaEventsAsync(
         string fromSortableUniqueId,
         int? limit = null
     )
@@ -34,18 +35,18 @@ public class AggregateEventHandlerGrain : Grain, IAggregateEventHandlerGrain
         var index = _events.FindIndex(e => e.SortableUniqueId == fromSortableUniqueId);
         
         if (index < 0)
-            return Task.FromResult((IReadOnlyList<IEvent>)new IEvent[0]);
+            return Task.FromResult((IReadOnlyList<OrleansEvent>)new IEvent[0]);
 
         var events = _events.Skip(index + 1)
                             .Take(limit ?? int.MaxValue)
                             .ToList();
 
-        return Task.FromResult((IReadOnlyList<IEvent>)events);
+        return Task.FromResult((IReadOnlyList<OrleansEvent>)events);
     }
 
-    public Task<IReadOnlyList<IEvent>> GetAllEventsAsync()
+    public Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync()
     {
-        return Task.FromResult((IReadOnlyList<IEvent>)_events.ToList());
+        return Task.FromResult((IReadOnlyList<OrleansEvent>)_events.ToList());
     }
 
     public Task<string> GetLastSortableUniqueIdAsync()

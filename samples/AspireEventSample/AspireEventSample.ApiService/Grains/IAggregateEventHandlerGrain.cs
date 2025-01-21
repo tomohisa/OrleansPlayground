@@ -1,4 +1,5 @@
 using Sekiban.Pure.Events;
+using Sekiban.Pure.OrleansEventSourcing;
 
 namespace AspireEventSample.ApiService.Grains;
 
@@ -17,7 +18,7 @@ public interface IAggregateEventHandlerGrain : IGrainWithStringKey
     /// </returns>
     Task<string> AppendEventsAsync(
         string expectedLastSortableUniqueId,
-        IReadOnlyList<IEvent> newEvents
+        IReadOnlyList<OrleansEvent> newEvents
     );
 
     /// <summary>
@@ -26,7 +27,7 @@ public interface IAggregateEventHandlerGrain : IGrainWithStringKey
     /// <param name="fromSortableUniqueId">差分の取得開始点となる SortableUniqueId</param>
     /// <param name="limit">取得する最大件数(必要なら)</param>
     /// <returns>該当するイベント一覧</returns>
-    Task<IReadOnlyList<IEvent>> GetDeltaEventsAsync(
+    Task<IReadOnlyList<OrleansEvent>> GetDeltaEventsAsync(
         string fromSortableUniqueId,
         int? limit = null
     );
@@ -37,7 +38,7 @@ public interface IAggregateEventHandlerGrain : IGrainWithStringKey
     /// 取得件数が大きい場合はページングなども検討。
     /// </summary>
     /// <returns>全イベント一覧</returns>
-    Task<IReadOnlyList<IEvent>> GetAllEventsAsync();
+    Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync();
 
     /// <summary>
     /// 現在の管理している最後の SortableUniqueId を返す。

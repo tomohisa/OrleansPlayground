@@ -105,7 +105,8 @@ public class EventTypesGenerator : IIncrementalGenerator
                     sb.AppendLine($"                {type.RecordName.Split('.').Last().ToLower()},");
                     sb.AppendLine("                partitionKeys,");
                     sb.AppendLine("                sortableUniqueId,");
-                    sb.AppendLine("                version),");
+                    sb.AppendLine("                version,");
+                    sb.AppendLine($"                \"{type.RecordName.Split('.').Last()}\"),");
                     break;
             }
         }
