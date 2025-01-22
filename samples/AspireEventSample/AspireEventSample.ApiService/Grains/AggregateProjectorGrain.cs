@@ -21,7 +21,8 @@ public class AggregateProjectorGrain(
         await base.OnActivateAsync(cancellationToken);
         // アクティベーション時に読み込み
         await state.ReadStateAsync();
-
+        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
+        state.State = await GetStateInternalAsync(eventGrain);
         _timer = this.RegisterGrainTimer(Callback, state, new() { DueTime = TimeSpan.FromSeconds(10), Period = TimeSpan.FromSeconds(10), Interleave = true });
     }
     public async Task Callback(object currentState)
@@ -52,23 +53,27 @@ public class AggregateProjectorGrain(
     public async Task<OrleansAggregate> GetStateAsync()
     {
         await state.ReadStateAsync();
-        var read = state.State;
-        if (read == null || GetPartitionKeysAndProjector().Projector.GetVersion() != read.ProjectorVersion)
-        {
-            return await RebuildStateAsync();
-        }
+        var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
+        var read = await GetStateInternalAsync(eventGrain);
         return read.ToOrleansAggregate();
     }
-    private async Task<Aggregate> GetState()
+    private async Task<Aggregate> GetStateInternalAsync(IAggregateEventHandlerGrain eventHandlerGrain)
     {
         var read = state.State;
         if (read == null || GetPartitionKeysAndProjector().Projector.GetVersion() != read.ProjectorVersion)
         {
+            UpdatedAfterWrite = true;
             return await RebuildStateInternalAsync();
         }
         if (read.Version == 0)
         {
             return Aggregate.EmptyFromPartitionKeys(GetPartitionKeysAndProjector().PartitionKeys);
+        }
+        if ((await eventHandlerGrain.GetLastSortableUniqueIdAsync()) != read.LastSortableUniqueId)
+        {
+            var events = await eventHandlerGrain.GetDeltaEventsAsync(read.LastSortableUniqueId);
+            read = read.Project(events.ToList().ToEvents(typeConverters.EventTypes), GetPartitionKeysAndProjector().Projector).UnwrapBox();
+            UpdatedAfterWrite = true;
         }
         return read;
     }
@@ -76,7 +81,7 @@ public class AggregateProjectorGrain(
     public async Task<OrleansCommandResponse> ExecuteCommandAsync(ICommandWithHandlerSerializable orleansCommand)
     {
         var eventGrain = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
-        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes, await GetState());
+        var orleansRepository = new OrleansRepository(eventGrain, GetPartitionKeysAndProjector().PartitionKeys, GetPartitionKeysAndProjector().Projector, typeConverters.EventTypes, await GetStateInternalAsync(eventGrain));
         var commandExecutor = new CommandExecutor() {EventTypes = typeConverters.EventTypes };
         var result = await commandExecutor.ExecuteGeneralNonGeneric(orleansCommand, 
             GetPartitionKeysAndProjector().Projector, GetPartitionKeysAndProjector().PartitionKeys, NoInjection.Empty, 
