@@ -2,14 +2,44 @@ using Sekiban.Pure.Events;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using ResultBoxes;
+using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Types;
 
 namespace AspireEventSample.ApiService.Grains;
 
-public class AggregateEventHandlerGrain(SekibanTypeConverters typeConverters) : Grain, IAggregateEventHandlerGrain
+public class AggregateEventHandlerGrain([PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<AggregateEventHandlerGrain.ToPersist> state, SekibanTypeConverters typeConverters) : Grain, IAggregateEventHandlerGrain
 {
+    public record ToPersist(string LastSortableUniqueId, OptionalValue<DateTime> LastUpdatedAt)
+    {
+        public static ToPersist FromEvents(IEnumerable<IEvent> events)
+        {
+            var lastEvent = events.LastOrDefault();
+            var last = lastEvent?.SortableUniqueId ?? string.Empty;
+            var value = new SortableUniqueIdValue(last);
+            if (string.IsNullOrWhiteSpace(last))
+            {
+                return new ToPersist(string.Empty, OptionalValue<DateTime>.Empty);
+            }
+            return new ToPersist(
+                last,
+                value.GetTicks()
+            );
+        }
+    }
+    
     private List<IEvent> _events = new();
+    
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await base.OnActivateAsync(cancellationToken);
+        await state.ReadStateAsync();
+        if (state.State == null || string.IsNullOrWhiteSpace(state.State.LastSortableUniqueId))
+        {
+            state.State = new ToPersist(string.Empty, OptionalValue<DateTime>.Empty);
+        }
+    }
 
     public async Task<IReadOnlyList<OrleansEvent>> AppendEventsAsync(
         string expectedLastSortableUniqueId,
@@ -30,6 +60,10 @@ public class AggregateEventHandlerGrain(SekibanTypeConverters typeConverters) : 
         {
             throw new InvalidCastException("Expected last event ID is later than new events");
         }
+
+        var persist = ToPersist.FromEvents(toStoreEvents);
+        state.State = persist;
+        await state.WriteStateAsync();
         _events.AddRange(toStoreEvents);
         return await Task.FromResult(toStoreEvents.ToOrleansEvents());
     }
@@ -59,12 +93,7 @@ public class AggregateEventHandlerGrain(SekibanTypeConverters typeConverters) : 
 
     public Task<string> GetLastSortableUniqueIdAsync()
     {
-        if (!_events.Any())
-        {
-            return Task.FromResult(String.Empty);
-        }
-
-        return Task.FromResult(_events.Last().SortableUniqueId);
+        return Task.FromResult(state.State.LastSortableUniqueId);
     }
 
     public Task RegisterProjectorAsync(string projectorKey)

@@ -15,16 +15,16 @@ public class AggregateProjectorGrain(
 {
     private OptionalValue<PartitionKeysAndProjector> _partitionKeysAndProjector = OptionalValue<PartitionKeysAndProjector>.Empty;
     private bool UpdatedAfterWrite { get; set; } = false;
-    private IGrainTimer _timer;
+    private IGrainTimer? _timer;
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await base.OnActivateAsync(cancellationToken);
         // アクティベーション時に読み込み
         await state.ReadStateAsync();
 
-        _timer = this.RegisterGrainTimer(callback, state, new() { DueTime = TimeSpan.FromSeconds(10), Period = TimeSpan.FromSeconds(10), Interleave = true });
+        _timer = this.RegisterGrainTimer(Callback, state, new() { DueTime = TimeSpan.FromSeconds(10), Period = TimeSpan.FromSeconds(10), Interleave = true });
     }
-    public async Task callback(object currentState)
+    public async Task Callback(object currentState)
     {
         if (UpdatedAfterWrite)
         {
