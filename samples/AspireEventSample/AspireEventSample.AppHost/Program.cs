@@ -8,6 +8,7 @@ var orleans = builder.AddOrleans("default")
     .WithClustering(clusteringTable)
     .WithGrainStorage("Default", grainStorage);
 
+
 var apiService = builder.AddProject<Projects.AspireEventSample_ApiService>("apiservice")
     .WithEndpoint("https", annotation => annotation.IsProxied = false)
     .WithReference(orleans);

@@ -24,7 +24,11 @@ builder.Services.AddOpenApi();
 // orleans related integrations
 builder.AddKeyedAzureTableClient("clustering");
 builder.AddKeyedAzureBlobClient("grain-state");
-builder.UseOrleans(config => config.UseDashboard(options => {  }));
+builder.UseOrleans(config =>
+{
+    config.UseDashboard(options => { });
+    config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
+});
 
 builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApiServiceAggregateTypes(),
     new AspireEventSampleApiServiceEventTypes(), new AspireEventSampleApiServiceAggregateProjectorSpecifier()));
