@@ -9,7 +9,9 @@ using Sekiban.Pure.Types;
 
 namespace AspireEventSample.ApiService.Grains;
 
-public class AggregateEventHandlerGrain([PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<AggregateEventHandlerGrain.ToPersist> state, SekibanTypeConverters typeConverters) : Grain, IAggregateEventHandlerGrain
+public class AggregateEventHandlerGrain(
+    [PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<AggregateEventHandlerGrain.ToPersist> state,
+    SekibanTypeConverters typeConverters) : Grain, IAggregateEventHandlerGrain
 {
     public record ToPersist(string LastSortableUniqueId, OptionalValue<DateTime> LastUpdatedAt)
     {
@@ -46,6 +48,7 @@ public class AggregateEventHandlerGrain([PersistentState(stateName: "aggregate",
         IReadOnlyList<OrleansEvent> newEvents
     )
     {
+        var streamProvider = this.GetStreamProvider("EventStreamProvider");
         var toStoreEvents = newEvents.ToList().ToEventsAndReplaceTime(typeConverters.EventTypes);
         if (string.IsNullOrWhiteSpace(expectedLastSortableUniqueId) && 
             _events.Count > 0 &&
@@ -65,7 +68,13 @@ public class AggregateEventHandlerGrain([PersistentState(stateName: "aggregate",
         state.State = persist;
         await state.WriteStateAsync();
         _events.AddRange(toStoreEvents);
-        return await Task.FromResult(toStoreEvents.ToOrleansEvents());
+        var orleansEvents = toStoreEvents.ToOrleansEvents();
+        var stream = streamProvider.GetStream<OrleansEvent>(StreamId.Create("AllEvents", Guid.Empty));
+        foreach (var ev in orleansEvents)
+        {
+            await stream.OnNextAsync(ev);
+        }
+        return await Task.FromResult(orleansEvents);
     }
 
 
