@@ -2,6 +2,7 @@ using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
+using Orleans.Streams;
 using ResultBoxes;
 using Scalar.AspNetCore;
 using Sekiban.Pure.Aggregates;
