@@ -9,23 +9,29 @@ using Sekiban.Pure.Documents;
 [GrainType("BranchEntityWriter")]
 public class BranchEntityWriter : Grain, IBranchEntityWriter
 {
-    private readonly ConcurrentDictionary<Guid, BranchEntity> _entities = new();
+    private readonly ConcurrentDictionary<string, BranchEntity> _entities = new();
 
-    public Task<BranchEntity> GetEntityByIdAsync(Guid targetId)
+    private static string GetCompositeKey(string rootPartitionKey, string aggregateGroup, Guid targetId) =>
+        $"{rootPartitionKey}@{aggregateGroup}@{targetId}";
+
+    public Task<BranchEntity> GetEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId)
     {
-        return Task.FromResult(_entities.TryGetValue(targetId, out var entity) ? entity : null);
+        var key = GetCompositeKey(rootPartitionKey, aggregateGroup, targetId);
+        return Task.FromResult(_entities.TryGetValue(key, out var entity) ? entity : null);
     }
 
-    public Task<BranchEntity> GetHistoryEntityByIdAsync(Guid targetId, SortableUniqueIdValue beforeUniqueId)
+    public Task<BranchEntity> GetHistoryEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId, SortableUniqueIdValue beforeUniqueId)
     {
         // In a real implementation, this would query historical versions
         // For now, just return the current entity if it exists
-        return Task.FromResult(_entities.TryGetValue(targetId, out var entity) ? entity : null);
+        var key = GetCompositeKey(rootPartitionKey, aggregateGroup, targetId);
+        return Task.FromResult(_entities.TryGetValue(key, out var entity) ? entity : null);
     }
 
     public Task<BranchEntity> AddOrUpdateEntityAsync(BranchEntity entity)
     {
-        _entities.AddOrUpdate(entity.TargetId, entity, (_, _) => entity);
+        var key = GetCompositeKey(entity.RootPartitionKey, entity.AggregateGroup, entity.TargetId);
+        _entities.AddOrUpdate(key, entity, (_, _) => entity);
         return Task.FromResult(entity);
     }
 }
