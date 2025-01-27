@@ -54,8 +54,3 @@ public interface IAggregateEventHandlerGrain : IGrainWithStringKey
     /// <returns></returns>
     Task RegisterProjectorAsync(string projectorKey);
 }
-
-public interface IEventConsumerGrain : IGrainWithGuidKey
-{
-    Task ConsumeEventsAsync(IReadOnlyList<OrleansEvent> events);
-}
