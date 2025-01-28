@@ -1,5 +1,6 @@
 using Orleans.Streams;
 using AspireEventSample.ApiService.Aggregates.Branches;
+using AspireEventSample.ApiService.Aggregates.Carts;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
 using Sekiban.Pure.OrleansEventSourcing;
 
@@ -9,12 +10,14 @@ namespace AspireEventSample.ApiService.Grains;
 public class EventConsumerGrain : Grain, IEventConsumerGrain
 {
     private readonly IBranchEntityWriter _branchEntityWriter;
+    private readonly ICartEntityWriter _cartEntityWriter;
     private IAsyncStream<OrleansEvent> _stream;
     private StreamSubscriptionHandle<OrleansEvent> _subscriptionHandle;
 
-    public EventConsumerGrain(IBranchEntityWriter branchEntityWriter)
+    public EventConsumerGrain(IBranchEntityWriter branchEntityWriter, ICartEntityWriter cartEntityWriter)
     {
         _branchEntityWriter = branchEntityWriter;
+        _cartEntityWriter = cartEntityWriter;
     }
     public Task OnErrorAsync(Exception ex)
     {
@@ -28,35 +31,93 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
         Console.WriteLine($"[MyGrain] Received event: {item}");
         
         var targetId = item.Id;
-        var existing = await _branchEntityWriter.GetEntityByIdAsync(
-            item.PartitionKeys.RootPartitionKey,
-            item.PartitionKeys.Group,
-            targetId);
 
-        // Create or update branch entity based on event type
-        if (item.Payload is BranchCreated created)
+        // Handle Branch events
+        if (item.Payload is BranchCreated || item.Payload is BranchNameChanged)
         {
-            var entity = new BranchEntity
+            var existing = await _branchEntityWriter.GetEntityByIdAsync(
+                item.PartitionKeys.RootPartitionKey,
+                item.PartitionKeys.Group,
+                targetId);
+
+            // Create or update branch entity based on event type
+            if (item.Payload is BranchCreated created)
             {
-                Id = Guid.NewGuid(),
-                TargetId = targetId,
-                RootPartitionKey = item.PartitionKeys.RootPartitionKey,
-                AggregateGroup = item.PartitionKeys.Group,
-                LastSortableUniqueId = item.SortableUniqueId,
-                TimeStamp = DateTime.UtcNow,
-                Name = created.Name
-            };
-            await _branchEntityWriter.AddOrUpdateEntityAsync(entity);
+                var entity = new BranchEntity
+                {
+                    Id = Guid.NewGuid(),
+                    TargetId = targetId,
+                    RootPartitionKey = item.PartitionKeys.RootPartitionKey,
+                    AggregateGroup = item.PartitionKeys.Group,
+                    LastSortableUniqueId = item.SortableUniqueId,
+                    TimeStamp = DateTime.UtcNow,
+                    Name = created.Name
+                };
+                await _branchEntityWriter.AddOrUpdateEntityAsync(entity);
+            }
+            else if (item.Payload is BranchNameChanged nameChanged && existing != null)
+            {
+                var updated = existing with
+                {
+                    LastSortableUniqueId = item.SortableUniqueId,
+                    TimeStamp = DateTime.UtcNow,
+                    Name = nameChanged.Name
+                };
+                await _branchEntityWriter.AddOrUpdateEntityAsync(updated);
+            }
         }
-        else if (item.Payload is BranchNameChanged nameChanged && existing != null)
+        // Handle Cart events
+        else if (item.Payload is ShoppingCartCreated || item.Payload is ShoppingCartItemAdded || item.Payload is ShoppingCartPaymentProcessed)
         {
-            var updated = existing with
+            var existing = await _cartEntityWriter.GetEntityByIdAsync(
+                item.PartitionKeys.RootPartitionKey,
+                item.PartitionKeys.Group,
+                targetId);
+
+            if (item.Payload is ShoppingCartCreated created)
             {
-                LastSortableUniqueId = item.SortableUniqueId,
-                TimeStamp = DateTime.UtcNow,
-                Name = nameChanged.Name
-            };
-            await _branchEntityWriter.AddOrUpdateEntityAsync(updated);
+                var entity = new CartEntity
+                {
+                    Id = Guid.NewGuid(),
+                    TargetId = targetId,
+                    RootPartitionKey = item.PartitionKeys.RootPartitionKey,
+                    AggregateGroup = item.PartitionKeys.Group,
+                    LastSortableUniqueId = item.SortableUniqueId,
+                    TimeStamp = DateTime.UtcNow,
+                    UserId = created.UserId,
+                    Items = new List<ShoppingCartItems>(),
+                    Status = "Created",
+                    TotalAmount = 0
+                };
+                await _cartEntityWriter.AddOrUpdateEntityAsync(entity);
+            }
+            else if (item.Payload is ShoppingCartItemAdded itemAdded && existing != null)
+            {
+                var updatedItems = new List<ShoppingCartItems>(existing.Items)
+                {
+                    new ShoppingCartItems(itemAdded.Name, itemAdded.Quantity, itemAdded.ItemId, itemAdded.Price)
+                };
+                var totalAmount = updatedItems.Sum(item => item.Price * item.Quantity);
+
+                var updated = existing with
+                {
+                    LastSortableUniqueId = item.SortableUniqueId,
+                    TimeStamp = DateTime.UtcNow,
+                    Items = updatedItems,
+                    TotalAmount = totalAmount
+                };
+                await _cartEntityWriter.AddOrUpdateEntityAsync(updated);
+            }
+            else if (item.Payload is ShoppingCartPaymentProcessed && existing != null)
+            {
+                var updated = existing with
+                {
+                    LastSortableUniqueId = item.SortableUniqueId,
+                    TimeStamp = DateTime.UtcNow,
+                    Status = "Paid"
+                };
+                await _cartEntityWriter.AddOrUpdateEntityAsync(updated);
+            }
         }
     }
 
