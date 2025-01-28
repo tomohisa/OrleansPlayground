@@ -13,18 +13,20 @@ public class BranchEntityWriter : Grain, IBranchEntityWriter
     private static string GetCompositeKey(string rootPartitionKey, string aggregateGroup, Guid targetId) =>
         $"{rootPartitionKey}@{aggregateGroup}@{targetId}";
 
-    public Task<BranchEntity> GetEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId)
+    public Task<BranchEntity?> GetEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId)
     {
         var key = GetCompositeKey(rootPartitionKey, aggregateGroup, targetId);
         return Task.FromResult(_entities.TryGetValue(key, out var entity) ? entity : null);
     }
 
-    public Task<BranchEntity> GetHistoryEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId, SortableUniqueIdValue beforeUniqueId)
+    public Task<List<BranchEntity>> GetHistoryEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId, SortableUniqueIdValue beforeUniqueId)
     {
         // In a real implementation, this would query historical versions
-        // For now, just return the current entity if it exists
+        // For now, just return the current entity in a list if it exists
         var key = GetCompositeKey(rootPartitionKey, aggregateGroup, targetId);
-        return Task.FromResult(_entities.TryGetValue(key, out var entity) ? entity : null);
+        return Task.FromResult(_entities.TryGetValue(key, out var entity) 
+            ? new List<BranchEntity> { entity } 
+            : new List<BranchEntity>());
     }
 
     public Task<BranchEntity> AddOrUpdateEntityAsync(BranchEntity entity)
