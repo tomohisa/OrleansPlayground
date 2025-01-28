@@ -1,4 +1,3 @@
-using Orleans.Streams.Core;
 using Sekiban.Pure.OrleansEventSourcing;
 
 namespace AspireEventSample.ApiService.Grains;
@@ -53,9 +52,4 @@ public interface IAggregateEventHandlerGrain : IGrainWithStringKey
     /// <param name="projectorKey">プロジェクターの固有キー</param>
     /// <returns></returns>
     Task RegisterProjectorAsync(string projectorKey);
-}
-
-public interface IEventConsumerGrain : IGrainWithGuidKey
-{
-    Task ConsumeEventsAsync(IReadOnlyList<OrleansEvent> events);
 }

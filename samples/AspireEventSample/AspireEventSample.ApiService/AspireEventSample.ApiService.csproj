@@ -14,7 +14,6 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <PrivateAssets>all</PrivateAssets>
     </ProjectReference>
-    <ProjectReference Include="..\Sekiban.Pure\Sekiban.Pure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

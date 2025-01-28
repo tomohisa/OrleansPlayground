@@ -3,7 +3,7 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
-using Sekiban.Pure.Query;
+
 namespace Sekiban.Pure.Repositories;
 
 public class Repository

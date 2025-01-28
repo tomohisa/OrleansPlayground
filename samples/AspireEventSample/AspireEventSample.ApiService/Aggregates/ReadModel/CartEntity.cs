@@ -1,10 +1,12 @@
 namespace AspireEventSample.ApiService.Aggregates.ReadModel;
 
+using AspireEventSample.ApiService.Aggregates.Carts;
 using Orleans.Serialization;
 using Sekiban.Pure.Documents;
+using System.Collections.Generic;
 
 [GenerateSerializer]
-public record BranchEntity : IReadModelEntity
+public record CartEntity : IReadModelEntity
 {
     [Id(0)]
     public required Guid Id { get; init; }
@@ -18,6 +20,14 @@ public record BranchEntity : IReadModelEntity
     public required string LastSortableUniqueId { get; init; }
     [Id(5)]
     public required DateTime TimeStamp { get; init; }
+    
+    // Cart specific properties
     [Id(6)]
-    public required string Name { get; init; }
+    public required Guid UserId { get; init; }
+    [Id(7)]
+    public required List<ShoppingCartItems> Items { get; init; }
+    [Id(8)]
+    public required string Status { get; init; }
+    [Id(9)]
+    public required int TotalAmount { get; init; }
 }
