@@ -3,7 +3,6 @@ namespace AspireEventSample.ApiService.Grains;
 using System.Collections.Concurrent;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
 using Orleans;
-using Orleans.Runtime;
 using Sekiban.Pure.Documents;
 
 [GrainType("BranchEntityWriter")]

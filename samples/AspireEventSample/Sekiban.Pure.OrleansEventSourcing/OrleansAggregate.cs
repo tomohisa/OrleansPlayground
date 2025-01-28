@@ -1,6 +1,5 @@
 using ResultBoxes;
 using Sekiban.Pure.Aggregates;
-using Sekiban.Pure.Documents;
 using Sekiban.Pure.Exception;
 using Sekiban.Pure.OrleansEventSourcing;
 
