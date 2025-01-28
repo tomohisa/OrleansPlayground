@@ -31,7 +31,6 @@ builder.UseOrleans(config =>
 
 builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApiServiceAggregateTypes(),
     new AspireEventSampleApiServiceEventTypes(), new AspireEventSampleApiServiceAggregateProjectorSpecifier()));
-builder.Services.AddTransient<IEntityWriter<BranchEntity>, BranchEntityWriter>();
 
 var app = builder.Build();
 

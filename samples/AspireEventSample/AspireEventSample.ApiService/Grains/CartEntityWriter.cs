@@ -5,9 +5,8 @@ using AspireEventSample.ApiService.Aggregates.ReadModel;
 using Orleans;
 using Sekiban.Pure.Documents;
 
-public interface ICartEntityWriter : IEntityWriter<CartEntity> { }
+public interface ICartEntityWriter : IEntityWriter<CartEntity>, IGrainWithStringKey { }
 
-[GrainType("CartEntityWriter")]
 public class CartEntityWriter : Grain, ICartEntityWriter
 {
     private readonly ConcurrentDictionary<string, CartEntity> _entities = new();
@@ -21,7 +20,7 @@ public class CartEntityWriter : Grain, ICartEntityWriter
         return Task.FromResult(_entities.TryGetValue(key, out var entity) ? entity : null);
     }
 
-    public Task<List<CartEntity>> GetHistoryEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId, SortableUniqueIdValue beforeUniqueId)
+    public Task<List<CartEntity>> GetHistoryEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId, string beforeSortableUniqueId)
     {
         // In a real implementation, this would query historical versions
         // For now, just return the current entity in a list if it exists

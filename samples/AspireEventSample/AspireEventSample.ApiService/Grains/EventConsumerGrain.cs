@@ -9,15 +9,11 @@ namespace AspireEventSample.ApiService.Grains;
 [ImplicitStreamSubscription("AllEvents")]
 public class EventConsumerGrain : Grain, IEventConsumerGrain
 {
-    private readonly IBranchEntityWriter _branchEntityWriter;
-    private readonly ICartEntityWriter _cartEntityWriter;
     private IAsyncStream<OrleansEvent> _stream;
     private StreamSubscriptionHandle<OrleansEvent> _subscriptionHandle;
 
-    public EventConsumerGrain(IBranchEntityWriter branchEntityWriter, ICartEntityWriter cartEntityWriter)
+    public EventConsumerGrain()
     {
-        _branchEntityWriter = branchEntityWriter;
-        _cartEntityWriter = cartEntityWriter;
     }
     public Task OnErrorAsync(Exception ex)
     {
@@ -35,7 +31,8 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
         // Handle Branch events
         if (item.Payload is BranchCreated || item.Payload is BranchNameChanged)
         {
-            var existing = await _branchEntityWriter.GetEntityByIdAsync(
+            var branchEntityWriter = GrainFactory.GetGrain<IBranchEntityWriter>(item.PartitionKeys.RootPartitionKey);
+            var existing = await branchEntityWriter.GetEntityByIdAsync(
                 item.PartitionKeys.RootPartitionKey,
                 item.PartitionKeys.Group,
                 targetId);
@@ -53,7 +50,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                     TimeStamp = DateTime.UtcNow,
                     Name = created.Name
                 };
-                await _branchEntityWriter.AddOrUpdateEntityAsync(entity);
+                await branchEntityWriter.AddOrUpdateEntityAsync(entity);
             }
             else if (item.Payload is BranchNameChanged nameChanged && existing != null)
             {
@@ -63,13 +60,14 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                     TimeStamp = DateTime.UtcNow,
                     Name = nameChanged.Name
                 };
-                await _branchEntityWriter.AddOrUpdateEntityAsync(updated);
+                await branchEntityWriter.AddOrUpdateEntityAsync(updated);
             }
         }
         // Handle Cart events
         else if (item.Payload is ShoppingCartCreated || item.Payload is ShoppingCartItemAdded || item.Payload is ShoppingCartPaymentProcessed)
         {
-            var existing = await _cartEntityWriter.GetEntityByIdAsync(
+            var cartEntityWriter = GrainFactory.GetGrain<ICartEntityWriter>(item.PartitionKeys.RootPartitionKey);
+            var existing = await cartEntityWriter.GetEntityByIdAsync(
                 item.PartitionKeys.RootPartitionKey,
                 item.PartitionKeys.Group,
                 targetId);
@@ -89,7 +87,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                     Status = "Created",
                     TotalAmount = 0
                 };
-                await _cartEntityWriter.AddOrUpdateEntityAsync(entity);
+                await cartEntityWriter.AddOrUpdateEntityAsync(entity);
             }
             else if (item.Payload is ShoppingCartItemAdded itemAdded && existing != null)
             {
@@ -106,7 +104,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                     Items = updatedItems,
                     TotalAmount = totalAmount
                 };
-                await _cartEntityWriter.AddOrUpdateEntityAsync(updated);
+                await cartEntityWriter.AddOrUpdateEntityAsync(updated);
             }
             else if (item.Payload is ShoppingCartPaymentProcessed && existing != null)
             {
@@ -116,7 +114,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                     TimeStamp = DateTime.UtcNow,
                     Status = "Paid"
                 };
-                await _cartEntityWriter.AddOrUpdateEntityAsync(updated);
+                await cartEntityWriter.AddOrUpdateEntityAsync(updated);
             }
         }
     }

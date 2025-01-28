@@ -1,3 +1,10 @@
 namespace AspireEventSample.ApiService.Aggregates.Carts;
 
-public record ShoppingCartItems(string Name, int Quantity, Guid ItemId, int Price);
+using Orleans.Serialization;
+
+[GenerateSerializer]
+public record ShoppingCartItems(
+    [property: Id(0)] string Name,
+    [property: Id(1)] int Quantity,
+    [property: Id(2)] Guid ItemId,
+    [property: Id(3)] int Price);

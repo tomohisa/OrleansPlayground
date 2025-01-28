@@ -5,7 +5,6 @@ using AspireEventSample.ApiService.Aggregates.ReadModel;
 using Orleans;
 using Sekiban.Pure.Documents;
 
-[GrainType("BranchEntityWriter")]
 public class BranchEntityWriter : Grain, IBranchEntityWriter
 {
     private readonly ConcurrentDictionary<string, BranchEntity> _entities = new();
@@ -19,7 +18,7 @@ public class BranchEntityWriter : Grain, IBranchEntityWriter
         return Task.FromResult(_entities.TryGetValue(key, out var entity) ? entity : null);
     }
 
-    public Task<List<BranchEntity>> GetHistoryEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId, SortableUniqueIdValue beforeUniqueId)
+    public Task<List<BranchEntity>> GetHistoryEntityByIdAsync(string rootPartitionKey, string aggregateGroup, Guid targetId, string beforeSortableUniqueId)
     {
         // In a real implementation, this would query historical versions
         // For now, just return the current entity in a list if it exists
