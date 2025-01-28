@@ -66,6 +66,7 @@ public class EventConsumerGrain : Grain
     public Task OnNextAsync(OrleansEvent item, StreamSequenceToken? token)
     {
         Console.WriteLine($"[MyGrain] Received event: {item}");
+        // var ev = item
         return Task.CompletedTask;
     }
 
