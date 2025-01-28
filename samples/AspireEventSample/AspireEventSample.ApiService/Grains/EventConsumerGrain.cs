@@ -26,7 +26,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
     {
         Console.WriteLine($"[MyGrain] Received event: {item}");
         
-        var targetId = item.Id;
+        var targetId = item.PartitionKeys.AggregateId;
 
         // Handle Branch events
         if (item.Payload is BranchCreated || item.Payload is BranchNameChanged)
