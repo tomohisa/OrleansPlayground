@@ -9,12 +9,9 @@ namespace AspireEventSample.ApiService.Grains;
 [ImplicitStreamSubscription("AllEvents")]
 public class EventConsumerGrain : Grain, IEventConsumerGrain
 {
-    private IAsyncStream<OrleansEvent> _stream;
-    private StreamSubscriptionHandle<OrleansEvent> _subscriptionHandle;
+    private IAsyncStream<OrleansEvent>? _stream = null;
+    private StreamSubscriptionHandle<OrleansEvent>? _subscriptionHandle = null;
 
-    public EventConsumerGrain()
-    {
-    }
     public Task OnErrorAsync(Exception ex)
     {
         Console.WriteLine($"[MyGrain] Stream error: {ex.Message}");

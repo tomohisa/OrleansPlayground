@@ -1,11 +1,10 @@
 using ResultBoxes;
 using Sekiban.Pure.Aggregates;
+using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
-using Sekiban.Pure.Documents;
-using Sekiban.Pure.OrleansEventSourcing;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public class OrleansRepository(IAggregateEventHandlerGrain eventHandlerGrain, PartitionKeys partitionKeys, IAggregateProjector projector, IEventTypes eventTypes, Aggregate aggregate)
 {

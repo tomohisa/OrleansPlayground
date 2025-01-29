@@ -1,6 +1,4 @@
-namespace AspireEventSample.ApiService.Grains;
-
-using Sekiban.Pure.Documents;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public interface IEntityWriter<TEntity> where TEntity : IReadModelEntity
 {

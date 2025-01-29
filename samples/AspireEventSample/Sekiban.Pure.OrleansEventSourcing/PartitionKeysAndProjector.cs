@@ -2,7 +2,7 @@ using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Projectors;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public record PartitionKeysAndProjector(PartitionKeys PartitionKeys, IAggregateProjector Projector)
 {

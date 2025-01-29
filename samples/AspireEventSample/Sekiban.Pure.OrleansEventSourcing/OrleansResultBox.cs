@@ -1,13 +1,13 @@
 using System.Text.Json.Serialization;
 using ResultBoxes;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 [GenerateSerializer]
-public record OrleansResultBox<TValue>(Exception? Exception,TValue? Value) where TValue : notnull
+public record OrleansResultBox<TValue>(System.Exception? Exception,TValue? Value) where TValue : notnull
 {
     [JsonIgnore] public bool IsSuccess => Exception is null && Value is not null;
-    public Exception GetException() =>
+    public System.Exception GetException() =>
         Exception ?? throw new ResultsInvalidOperationException("no exception");
 
     public TValue GetValue() =>

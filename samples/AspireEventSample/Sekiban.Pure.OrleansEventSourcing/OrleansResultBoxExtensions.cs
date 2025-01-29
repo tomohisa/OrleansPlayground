@@ -1,6 +1,6 @@
 using ResultBoxes;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public static class OrleansResultBoxExtensions
 {

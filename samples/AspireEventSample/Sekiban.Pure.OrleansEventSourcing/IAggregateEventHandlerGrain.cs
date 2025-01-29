@@ -1,6 +1,4 @@
-using Sekiban.Pure.OrleansEventSourcing;
-
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public interface IAggregateEventHandlerGrain : IGrainWithStringKey
 {
