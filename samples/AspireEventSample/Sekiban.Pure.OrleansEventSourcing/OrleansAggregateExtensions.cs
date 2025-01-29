@@ -1,7 +1,6 @@
 using Sekiban.Pure.Aggregates;
-using Sekiban.Pure.OrleansEventSourcing;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public static class OrleansAggregateExtensions
 {

@@ -1,3 +1,5 @@
+using Sekiban.Pure.OrleansEventSourcing;
+
 namespace AspireEventSample.ApiService.Grains;
 
 using System.Collections.Concurrent;

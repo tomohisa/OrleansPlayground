@@ -1,10 +1,9 @@
-using Sekiban.Pure.Events;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
-using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Events;
 using Sekiban.Pure.Types;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public class AggregateEventHandlerGrain(
     [PersistentState(stateName: "aggregate", storageName: "Default")] IPersistentState<AggregateEventHandlerGrain.ToPersist> state,

@@ -1,3 +1,5 @@
+using Sekiban.Pure.OrleansEventSourcing;
+
 namespace AspireEventSample.ApiService.Aggregates.ReadModel;
 
 using AspireEventSample.ApiService.Aggregates.Carts;

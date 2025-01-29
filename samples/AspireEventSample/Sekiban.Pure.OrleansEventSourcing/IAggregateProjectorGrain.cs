@@ -1,7 +1,6 @@
 using Sekiban.Pure.Command.Handlers;
-using Sekiban.Pure.OrleansEventSourcing;
 
-namespace AspireEventSample.ApiService.Grains;
+namespace Sekiban.Pure.OrleansEventSourcing;
 
 public interface IAggregateProjectorGrain : IGrainWithStringKey
 {
