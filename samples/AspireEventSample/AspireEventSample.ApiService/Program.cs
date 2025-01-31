@@ -33,6 +33,8 @@ builder.UseOrleans(config =>
 builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApiServiceAggregateTypes(),
     new AspireEventSampleApiServiceEventTypes(), new AspireEventSampleApiServiceAggregateProjectorSpecifier()));
 
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
