@@ -5,6 +5,7 @@ using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
 using ResultBoxes;
 using Scalar.AspNetCore;
+using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Types;
@@ -62,21 +63,29 @@ app.MapGet("/weatherforecast", () =>
 app.MapDefaultEndpoints();
 
 // Add new app.MapPost() method here
-app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromServices]IClusterClient clusterClient) =>
+app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromServices]IClusterClient clusterClient, [FromServices] IHttpContextAccessor contextAccessor) =>
     {
     var partitionKeyAndProjector = new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
     var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-    OrleansCommand orleansCommand = new OrleansCommand(command.ToString());
-    return await aggregateProjectorGrain.ExecuteCommandAsync(command);
+    CommandMetadataProvider metadataProvider = new CommandMetadataProvider(() =>
+    {
+        // return executing user from http context + ip address
+        return (contextAccessor.HttpContext?.User?.Identity?.Name ?? "unknown") + "|" + (contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "ip unknown");
+    });
+    return await aggregateProjectorGrain.ExecuteCommandAsync(command, OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
     
 }).WithName("RegisterBranch")
     .WithOpenApi();
-app.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [FromServices]IClusterClient clusterClient) =>
+app.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [FromServices]IClusterClient clusterClient, [FromServices] IHttpContextAccessor contextAccessor) =>
     {
     var partitionKeyAndProjector = new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
     var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-    OrleansCommand orleansCommand = new OrleansCommand(command.ToString());
-    return await aggregateProjectorGrain.ExecuteCommandAsync(command);
+    CommandMetadataProvider metadataProvider = new CommandMetadataProvider(() =>
+    {
+        // return executing user from http context + ip address
+        return (contextAccessor.HttpContext?.User?.Identity?.Name ?? "unknown") + "|" + (contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "ip unknown");
+    });
+    return await aggregateProjectorGrain.ExecuteCommandAsync(command, OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
 }).WithName("ChangeBranchName")
     .WithOpenApi();
 

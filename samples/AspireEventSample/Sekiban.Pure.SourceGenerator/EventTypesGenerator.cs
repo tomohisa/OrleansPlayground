@@ -91,7 +91,8 @@ public class EventTypesGenerator : IIncrementalGenerator
         sb.AppendLine("            IEventPayload payload,");
         sb.AppendLine("            PartitionKeys partitionKeys,");
         sb.AppendLine("            string sortableUniqueId,");
-        sb.AppendLine("            int version) => payload switch");
+        sb.AppendLine("            int version,");
+        sb.AppendLine("            EventMetadata metadata) => payload switch");
         sb.AppendLine("        {");
 
         foreach (var type in eventTypes)
@@ -106,7 +107,7 @@ public class EventTypesGenerator : IIncrementalGenerator
                     sb.AppendLine("                partitionKeys,");
                     sb.AppendLine("                sortableUniqueId,");
                     sb.AppendLine("                version,");
-                    sb.AppendLine($"                \"{type.RecordName.Split('.').Last()}\"),");
+                    sb.AppendLine("                metadata),");
                     break;
             }
         }
