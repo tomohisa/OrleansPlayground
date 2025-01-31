@@ -9,4 +9,5 @@ public interface IEvent
     public PartitionKeys PartitionKeys { get; }
     public SortableUniqueIdValue GetSortableUniqueId() => new(SortableUniqueId);
     public IEventPayload GetPayload();
+    public EventMetadata Metadata { get; }
 }

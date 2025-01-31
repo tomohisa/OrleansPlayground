@@ -9,5 +9,5 @@ public class EmptyEventTypes : IEventTypes
         IEventPayload payload,
         PartitionKeys partitionKeys,
         string sortableUniqueId,
-        int version) => ResultBox<IEvent>.FromException(new SekibanEventTypeNotFoundException(""));
+        int version, EventMetadata metadata) => ResultBox<IEvent>.FromException(new SekibanEventTypeNotFoundException(""));
 }

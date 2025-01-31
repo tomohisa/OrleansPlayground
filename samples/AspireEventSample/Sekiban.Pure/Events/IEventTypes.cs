@@ -8,5 +8,6 @@ public interface IEventTypes
         IEventPayload payload,
         PartitionKeys partitionKeys,
         string sortableUniqueId,
-        int version);
+        int version,
+        EventMetadata metadata);
 }
