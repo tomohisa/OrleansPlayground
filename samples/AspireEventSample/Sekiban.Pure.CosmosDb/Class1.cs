@@ -267,7 +267,7 @@ public class CosmosDbFactory(
             async container =>
             {
                 var query = container.GetItemLinqQueryable<IDocument>().Where(b => true);
-                var feedIterator = container.GetItemQueryIterator<dynamic>(query.ToQueryDefinition());
+                var feedIterator = container.GetItemQueryIterator<CosmosEventInfo>(query.ToQueryDefinition());
 
                 var deleteItemIds = new List<(Guid id, PartitionKey partitionKey)>();
                 while (feedIterator.HasMoreResults)
@@ -275,14 +275,14 @@ public class CosmosDbFactory(
                     var response = await feedIterator.ReadNextAsync();
                     foreach (var item in response)
                     {
-                        var id = SekibanJsonHelper.GetValue<Guid>(item, nameof(IDocument.Id));
-                        var partitionKey = SekibanJsonHelper.GetValue<string>(item, nameof(IDocument.PartitionKey));
-                        var rootPartitionKey = SekibanJsonHelper.GetValue<string>(item, nameof(IDocument.RootPartitionKey));
-                        var aggregateType = SekibanJsonHelper.GetValue<string>(item, nameof(IDocument.AggregateType));
-                        if (id is null || partitionKey is null)
+                        if (item is null)
                         {
                             continue;
                         }
+                        var id = item.Id;
+                        var partitionKey = item.PartitionKey;
+                        var rootPartitionKey = item.RootPartitionKey;
+                        var aggregateType = item.AggregateType;
 
                         deleteItemIds.Add((id, new PartitionKeyBuilder().Add(rootPartitionKey).Add(aggregateType).Add(partitionKey).Build()));
                     }
@@ -371,3 +371,14 @@ public record SekibanAzureCosmosDbOption
         };
     }
 }
+
+public record CosmosEventInfo
+{
+    [JsonPropertyName("id")]
+    public Guid Id { get; init; }
+    public string PartitionKey { get; init; } = string.Empty;
+    public string RootPartitionKey { get; init; } = string.Empty;
+    public string AggregateType { get; init; } = string.Empty;
+}
+
+
