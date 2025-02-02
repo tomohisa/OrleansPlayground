@@ -37,32 +37,10 @@ public class CosmosPartitionGenerator
         new PartitionKeyBuilder()
             .Add(partitionKeys.RootPartitionKey)
             .Add(partitionKeys.Group)
-            .Add(PartitionKeyGenerator.ForEvent(partitionKeys.AggregateId, partitionKeys.Group, partitionKeys.RootPartitionKey))
+            .Add(PartitionKeyGenerator.ForEvent(partitionKeys))
             .Build();
 }
 
-public static class PartitionKeyGenerator
-{
-    /// <summary>
-    ///     Partition Key for the Command Document
-    /// </summary>
-    /// <param name="aggregateId"></param>
-    /// <param name="aggregateType"></param>
-    /// <param name="rootPartitionKey"></param>
-    /// <returns></returns>
-    public static string ForCommand(Guid aggregateId, Type aggregateType, string rootPartitionKey) =>
-        $"c_{rootPartitionKey}_{aggregateType.Name}_{aggregateId}";
-
-    /// <summary>
-    ///     Partition Key for the Event Document
-    /// </summary>
-    /// <param name="aggregateId"></param>
-    /// <param name="group"></param>
-    /// <param name="rootPartitionKey"></param>
-    /// <returns></returns>
-    public static string ForEvent(Guid aggregateId, string group, string rootPartitionKey) =>
-        $"{rootPartitionKey}_{group}_{aggregateId}";
-}
 
 
 public interface ICosmosDbFactory
