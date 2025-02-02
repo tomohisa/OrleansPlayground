@@ -17,18 +17,51 @@ public class Class1
 {
 }
 
-public class CosmosDbEventWriter : IEventWriter
+public class CosmosDbEventWriter(ICosmosDbFactory dbFactory) : IEventWriter
 {
+    
+    public Task SaveEvents<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent=> dbFactory.CosmosActionAsync(
+        DocumentType.Event,
+        async container =>
+        {
+            var taskList = events
+                .Select(ev => container.UpsertItemAsync<dynamic>(ev, CosmosPartitionGenerator.ForEvent(ev.PartitionKeys)))
+                .ToList();
+            await Task.WhenAll(taskList);
+        });
+}
 
-    public CosmosDbEventWriter()
-    {
-    }
+public class CosmosPartitionGenerator
+{
+    public static PartitionKey ForEvent(PartitionKeys partitionKeys) =>
+        new PartitionKeyBuilder()
+            .Add(partitionKeys.RootPartitionKey)
+            .Add(partitionKeys.Group)
+            .Add(PartitionKeyGenerator.ForEvent(partitionKeys.AggregateId, partitionKeys.Group, partitionKeys.RootPartitionKey))
+            .Build();
+}
 
+public static class PartitionKeyGenerator
+{
+    /// <summary>
+    ///     Partition Key for the Command Document
+    /// </summary>
+    /// <param name="aggregateId"></param>
+    /// <param name="aggregateType"></param>
+    /// <param name="rootPartitionKey"></param>
+    /// <returns></returns>
+    public static string ForCommand(Guid aggregateId, Type aggregateType, string rootPartitionKey) =>
+        $"c_{rootPartitionKey}_{aggregateType.Name}_{aggregateId}";
 
-    public Task SaveEvents<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent
-    {
-        throw new NotImplementedException();
-    }
+    /// <summary>
+    ///     Partition Key for the Event Document
+    /// </summary>
+    /// <param name="aggregateId"></param>
+    /// <param name="group"></param>
+    /// <param name="rootPartitionKey"></param>
+    /// <returns></returns>
+    public static string ForEvent(Guid aggregateId, string group, string rootPartitionKey) =>
+        $"{rootPartitionKey}_{group}_{aggregateId}";
 }
 
 
@@ -107,7 +140,7 @@ public class CosmosDbFactory(
 
     public async Task DeleteAllFromEventContainer()
     {
-        await DeleteAllFromAggregateFromContainerIncludes();
+        await DeleteAllFromAggregateFromContainerIncludes(DocumentType.Event);
     }
 
     public async Task<T> CosmosActionAsync<T>(
