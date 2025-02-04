@@ -26,6 +26,7 @@ public interface IAggregatesStream
 public record SortableIdConditionNone : ISortableIdCondition
 {
     public bool OutsideOfRange(SortableUniqueIdValue toCompare) => false;
+    public static SortableIdConditionNone None => new();
 }
 public record SinceSortableIdCondition(SortableUniqueIdValue SortableUniqueId) : ISortableIdCondition
 {
@@ -49,6 +50,11 @@ public interface ISortableIdCondition
             : new BetweenSortableIdCondition(end, start);
     public static ISortableIdCondition FromState(IAggregate? state) =>
         state?.LastSortableUniqueId is { } lastSortableId ? Since(lastSortableId) : None;
+}
+public record AggregateGroupStream(
+    string AggregateGroup) : IAggregatesStream
+{
+    public List<string> GetStreamNames() => [AggregateGroup];
 }
 
 
@@ -97,6 +103,12 @@ public record EventRetrievalInfo(
                     : new ApplicationException("Root Partition Key is not set"))
             .Remap(
                 aggregateName => PartitionKeys.Existing(AggregateId.GetValue(),aggregateName, RootPartitionKey.GetValue()).ToPrimaryKeysString());
+    public static EventRetrievalInfo FromPartitionKeys(PartitionKeys partitionKeys) =>
+        new(
+            OptionalValue.FromValue(partitionKeys.RootPartitionKey),
+            OptionalValue<IAggregatesStream>.FromValue(new AggregateGroupStream(partitionKeys.Group)),
+            OptionalValue.FromValue(partitionKeys.AggregateId),
+            SortableIdConditionNone.None);
 }
 
 public interface IEventReader

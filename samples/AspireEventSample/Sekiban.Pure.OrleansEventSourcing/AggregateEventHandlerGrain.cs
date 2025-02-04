@@ -9,7 +9,7 @@ public class AggregateEventHandlerGrain(
     [PersistentState("aggregate", "Default")]
     IPersistentState<AggregateEventHandlerGrain.ToPersist> state,
     SekibanTypeConverters typeConverters,
-    IEventWriter eventWriter) : Grain, IAggregateEventHandlerGrain
+    IEventWriter eventWriter, IEventReader eventReader) : Grain, IAggregateEventHandlerGrain
 {
     private readonly List<IEvent> _events = new();
 
@@ -60,9 +60,13 @@ public class AggregateEventHandlerGrain(
         return Task.FromResult((IReadOnlyList<OrleansEvent>)events);
     }
 
-    public Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync()
+    public async Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync()
     {
-        return Task.FromResult((IReadOnlyList<OrleansEvent>)_events.ToList());
+        var retrievalInfo = PartitionKeys.FromPrimaryKeysString(this.GetPrimaryKeyString())
+            .Remap(EventRetrievalInfo.FromPartitionKeys).UnwrapBox();
+
+        var events = await eventReader.GetEvents(retrievalInfo).UnwrapBox();
+        return events.ToList().ToOrleansEvents();
     }
 
     public Task<string> GetLastSortableUniqueIdAsync()

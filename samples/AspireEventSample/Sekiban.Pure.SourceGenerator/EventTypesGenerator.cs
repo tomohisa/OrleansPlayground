@@ -80,6 +80,7 @@ public class EventTypesGenerator : IIncrementalGenerator
         sb.AppendLine("using Sekiban.Pure.Events;");
         sb.AppendLine("using Sekiban.Pure.Documents;");
         sb.AppendLine("using Sekiban.Pure.Extensions;");
+        sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using System.Text.Json.Serialization;");
 
         sb.AppendLine();
@@ -135,12 +136,37 @@ public class EventTypesGenerator : IIncrementalGenerator
         sb.AppendLine("            _ => ResultBox<IEventDocument>.FromException(");
         sb.AppendLine("                new SekibanEventTypeNotFoundException($\"Event Type {ev.GetPayload().GetType().Name} Not Found\"))");
         sb.AppendLine("        };");
+        
+
+        
+        
+        sb.AppendLine("        public ResultBox<IEvent> DeserializeToTyped(");
+        sb.AppendLine("            EventDocumentCommon common, JsonSerializerOptions serializeOptions) => common.PayloadTypeName switch");
+        sb.AppendLine("        {");
+
+        foreach (var type in eventTypes)
+        {
+            switch (type.InterfaceName, type.TypeCount)
+            {
+                case ("IEventPayload", 0):
+                    sb.AppendLine($"            nameof({type.RecordName}) => common.ToEvent<{type.RecordName}>(serializeOptions),");
+                    break;
+            }
+        }
+
+        sb.AppendLine("            _ => ResultBox<IEvent>.FromException(");
+        sb.AppendLine("                new SekibanEventTypeNotFoundException($\"Event Type {common.PayloadTypeName} Not Found\"))");
+        sb.AppendLine("        };");
+
+        
+        
         sb.AppendLine("    }");
         sb.AppendLine("/***");
         sb.AppendLine("    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]");
         foreach (var type in eventTypes)
         {
             sb.AppendLine($"    [JsonSerializable(typeof(EventDocument<{type.RecordName}>))]");
+            sb.AppendLine($"    [JsonSerializable(typeof({type.RecordName}))]");
         }
         sb.AppendLine($"    public partial class {rootNamespace.Replace(".", "")}EventsJsonContext : JsonSerializerContext");
         sb.AppendLine("    {");
