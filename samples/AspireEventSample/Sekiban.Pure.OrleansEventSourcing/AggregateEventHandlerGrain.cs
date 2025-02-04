@@ -9,7 +9,7 @@ public class AggregateEventHandlerGrain(
     [PersistentState("aggregate", "Default")]
     IPersistentState<AggregateEventHandlerGrain.ToPersist> state,
     SekibanTypeConverters typeConverters,
-    IEventWriter eventWriter) : Grain, IAggregateEventHandlerGrain
+    IEventWriter eventWriter, IEventReader eventReader) : Grain, IAggregateEventHandlerGrain
 {
     private readonly List<IEvent> _events = new();
 
@@ -51,18 +51,23 @@ public class AggregateEventHandlerGrain(
         var index = _events.FindIndex(e => e.SortableUniqueId == fromSortableUniqueId);
 
         if (index < 0)
-            return Task.FromResult((IReadOnlyList<OrleansEvent>)new IEvent[0]);
+            return Task.FromResult<IReadOnlyList<OrleansEvent>>(new List<OrleansEvent>());
 
-        var events = _events.Skip(index + 1)
-            .Take(limit ?? int.MaxValue)
-            .ToList();
-
-        return Task.FromResult((IReadOnlyList<OrleansEvent>)events);
+        return Task.FromResult<IReadOnlyList<OrleansEvent>>(
+            _events.Skip(index + 1)
+                .Take(limit ?? int.MaxValue)
+                .ToList()
+                .ToOrleansEvents()
+                .ToList());
     }
 
-    public Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync()
+    public async Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync()
     {
-        return Task.FromResult((IReadOnlyList<OrleansEvent>)_events.ToList());
+        var retrievalInfo = PartitionKeys.FromPrimaryKeysString(this.GetPrimaryKeyString())
+            .Remap(EventRetrievalInfo.FromPartitionKeys).UnwrapBox();
+
+        var events = await eventReader.GetEvents(retrievalInfo).UnwrapBox();
+        return events.ToList().ToOrleansEvents();
     }
 
     public Task<string> GetLastSortableUniqueIdAsync()

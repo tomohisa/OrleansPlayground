@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 
@@ -14,4 +15,7 @@ public interface IEventTypes
 
     public ResultBox<IEventDocument> ConvertToEventDocument(
         IEvent ev);
+
+    public ResultBox<IEvent> DeserializeToTyped(
+        EventDocumentCommon common, JsonSerializerOptions serializeOptions);
 }

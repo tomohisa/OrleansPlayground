@@ -56,6 +56,7 @@ builder.Services.AddTransient<ICosmosMemoryCacheAccessor, CosmosMemoryCacheAcces
 builder.Services.AddTransient<IEventTypes, AspireEventSampleApiServiceEventTypes>();
 var dbOption = SekibanAzureCosmosDbOption.FromConfiguration(builder.Configuration.GetSection("Sekiban"), builder.Configuration);
 builder.Services.AddSingleton(dbOption);
+builder.Services.AddTransient<IEventReader, CosmosDbEventReader>();
 builder.Services.AddMemoryCache();
 
 var app = builder.Build();
@@ -121,6 +122,15 @@ app.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]
         var state = await aggregateProjectorGrain.GetStateAsync();
         return typeConverters.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
     }).WithName("GetBranch")
+    .WithOpenApi();
+
+app.MapGet("/branch/{branchId}/reload", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient, [FromServices] SekibanTypeConverters typeConverters) =>
+    {
+        var partitionKeyAndProjector = new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
+        var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
+        var state = await aggregateProjectorGrain.RebuildStateAsync();
+        return typeConverters.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
+    }).WithName("GetBranchReload")
     .WithOpenApi();
 
 

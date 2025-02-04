@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Exception;
@@ -18,5 +19,10 @@ public class EmptyEventTypes : IEventTypes
     public ResultBox<IEventDocument> ConvertToEventDocument(IEvent ev)
     {
         return ResultBox<IEventDocument>.FromException(new SekibanEventTypeNotFoundException(""));
+    }
+
+    public ResultBox<IEvent> DeserializeToTyped(EventDocumentCommon common, JsonSerializerOptions serializeOptions)
+    {
+        return ResultBox<IEvent>.FromException(new SekibanEventTypeNotFoundException(""));
     }
 }

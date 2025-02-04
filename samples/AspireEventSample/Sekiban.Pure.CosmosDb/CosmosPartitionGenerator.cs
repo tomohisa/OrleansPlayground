@@ -12,4 +12,11 @@ public class CosmosPartitionGenerator
             .Add(document.AggregateGroup)
             .Add(document.PartitionKey)
             .Build();
+    public static PartitionKey ForAggregate(PartitionKeys partitionKeys) =>
+        new PartitionKeyBuilder()
+            .Add(partitionKeys.RootPartitionKey)
+            .Add(partitionKeys.Group)
+            .Add(partitionKeys.ToPrimaryKeysString())
+            .Build();
+
 }

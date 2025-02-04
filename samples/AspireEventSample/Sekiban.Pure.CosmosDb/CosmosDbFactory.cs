@@ -14,6 +14,7 @@ public class CosmosDbFactory(
     ICosmosMemoryCacheAccessor cosmosMemoryCache,
     SekibanCosmosClientOptions options, SekibanAzureCosmosDbOption sekibanAzureCosmosDbOptions)
 {
+    public JsonSerializerOptions GetJsonSerializerOptions() => options.JsonSerializerOptions;
     public Func<Task<CosmosClient?>> SearchCosmosClientAsync { get; set; } = async () =>
     {
         await Task.CompletedTask;

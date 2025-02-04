@@ -9,7 +9,10 @@ namespace Sekiban.Pure.OrleansEventSourcing;
 public class OrleansRepository(IAggregateEventHandlerGrain eventHandlerGrain, PartitionKeys partitionKeys, IAggregateProjector projector, IEventTypes eventTypes, Aggregate aggregate)
 {
     public Task<ResultBox<Aggregate>> Load()
-        => aggregate.ToResultBox().ToTask();
+        => ResultBox.FromValue(eventHandlerGrain.GetAllEventsAsync())
+            .Remap(events => events.ToList().ToEvents(eventTypes))
+            .Conveyor(events=> aggregate.Project(events, projector));
+    
 
     public Task<ResultBox<List<IEvent>>> Save(string lastSortableUniqueId, List<IEvent> events)
         => ResultBox.WrapTry(() => eventHandlerGrain.AppendEventsAsync(lastSortableUniqueId, events.ToOrleansEvents()))
