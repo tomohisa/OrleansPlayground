@@ -3,6 +3,7 @@ using AspireEventSample.ApiService.Aggregates.ReadModel;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Grains;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using ResultBoxes;
 using Scalar.AspNetCore;
 using Sekiban.Pure.Command.Handlers;
@@ -38,6 +39,17 @@ builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApi
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSingleton(new SekibanCosmosClientOptions());
+// builder.Services.AddSingleton(new SekibanCosmosClientOptions()
+// {
+//     ClientOptions = new CosmosClientOptions()
+//     {
+//         Serializer = new SourceGenCosmosSerializer(AspireEventSampleApiServiceEventsJsonContext.Default.Options),
+//         AllowBulkExecution = true,
+//         MaxRetryAttemptsOnRateLimitedRequests = 200,
+//         ConnectionMode = ConnectionMode.Gateway,
+//         GatewayModeMaxConnectionLimit = 200
+//     }
+// });
 builder.Services.AddTransient<IEventWriter, CosmosDbEventWriter>();
 builder.Services.AddTransient<CosmosDbFactory>();
 builder.Services.AddTransient<ICosmosMemoryCacheAccessor, CosmosMemoryCacheAccessor>();

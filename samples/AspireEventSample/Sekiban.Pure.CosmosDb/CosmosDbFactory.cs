@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Caching.Memory;
@@ -223,5 +225,64 @@ public class CosmosDbFactory(
         cosmosMemoryCache.Cache.Remove(GetMemoryCacheContainerKey(documentType, databaseId, containerId));
     }
 
-    private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/RootPartitionKey", "/AggregateGroup", "/PartitionKey"];
+    private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/rootPartitionKey", "/aggregateGroup", "/partitionKey"];
+    // private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/RootPartitionKey", "/AggregateGroup", "/PartitionKey"];
+}
+
+public class SourceGenCosmosSerializer : CosmosSerializer
+{
+    private readonly JsonSerializerOptions _serializerOptions;
+
+    public SourceGenCosmosSerializer(JsonSerializerOptions serializerOptions = null)
+    {
+        // ソースジェネレーターで生成されたオプションを利用できるようにする
+        _serializerOptions = serializerOptions ?? new JsonSerializerOptions();
+    }
+
+    public override T FromStream<T>(Stream stream)
+    {
+        if (stream == null)
+        {
+            throw new ArgumentNullException(nameof(stream));
+        }
+
+        // T が Stream 自身の場合はそのまま返す
+        if (typeof(Stream).IsAssignableFrom(typeof(T)))
+        {
+            return (T)(object)stream;
+        }
+
+        // Cosmos DB SDK の仕様により、ストリームは SDK 内で閉じられるので using で囲む
+        using (stream)
+        {
+            // ※ 同期処理で呼び出すために GetAwaiter().GetResult() を利用
+            return JsonSerializer.Deserialize<T>(stream, _serializerOptions);
+        }
+    }
+
+    public override Stream ToStream<T>(T input)
+    {
+        var stream = new MemoryStream();
+
+        // まず、ソースジェネレータで生成された JsonTypeInfo を取得してみる
+        var typeInfo = _serializerOptions.GetTypeInfo(typeof(T)) as JsonTypeInfo<T>;
+
+        if (typeInfo != null)
+        {
+            // ソースジェネレータで最適化されたシリアライゼーション
+            var json = JsonSerializer.Serialize(input, typeInfo);
+            var writer = new Utf8JsonWriter(stream);
+            writer.WriteRawValue(json);
+            writer.Flush();
+        }
+        else
+        {
+            // 対象型がソースジェネレータに登録されていない場合は、フォールバック
+            JsonSerializer.Serialize(stream, input, _serializerOptions);
+        }
+        
+        // ストリームの先頭にシーク
+        stream.Seek(0, SeekOrigin.Begin);
+        return stream;    
+    }
 }
