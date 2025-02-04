@@ -1,114 +1,12 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Azure.Core.Serialization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Exception;
-using Sekiban.Pure.OrleansEventSourcing;
 
 namespace Sekiban.Pure.CosmosDb;
-
-public class Class1
-{
-}
-
-public class CosmosDbEventWriter(CosmosDbFactory dbFactory) : IEventWriter
-{
-    
-    public Task SaveEvents<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent=> dbFactory.CosmosActionAsync(
-        DocumentType.Event,
-        async container =>
-        {
-            var taskList = events
-                // .Select(ev => ev.)
-                .Select(ev => container.UpsertItemAsync<dynamic>(ev, CosmosPartitionGenerator.ForEvent(ev.PartitionKeys)))
-                .ToList();
-            await Task.WhenAll(taskList);
-        });
-}
-
-public class CosmosPartitionGenerator
-{
-    public static PartitionKey ForEvent(PartitionKeys partitionKeys) =>
-        new PartitionKeyBuilder()
-            .Add(partitionKeys.RootPartitionKey)
-            .Add(partitionKeys.Group)
-            .Add(PartitionKeyGenerator.ForEvent(partitionKeys))
-            .Build();
-}
-
-
-
-
-/// <summary>
-///     Use this to access memory cache instance.
-///     In should share same instance over threads.
-/// </summary>
-public interface ICosmosMemoryCacheAccessor
-{
-    /// <summary>
-    ///     Get shared memory cache instance.
-    /// </summary>
-    IMemoryCache Cache { get; }
-}
-/// <summary>
-///     Memory cache accessor
-///     Note: This class is for internal use only
-/// </summary>
-public class CosmosMemoryCacheAccessor : ICosmosMemoryCacheAccessor
-{
-    private static IMemoryCache? staticMemoryCache;
-    public CosmosMemoryCacheAccessor(IMemoryCache memoryCache) => Cache = staticMemoryCache ??= memoryCache;
-    public IMemoryCache Cache { get; }
-}
-
-
-public class SekibanCosmosSerializer() : CosmosSerializer
-{
-    private readonly JsonObjectSerializer _jsonObjectSerializer = new(new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, PropertyNameCaseInsensitive = true });
-// can use source generator serialization.
-    public override T FromStream<T>(Stream stream)
-    {
-        if (typeof(Stream).IsAssignableFrom(typeof(T)))
-        {
-            return (T)(object)stream;
-        }
-
-        using (stream)
-        {
-            return (T)_jsonObjectSerializer.Deserialize(stream, typeof(T), default)!;
-        }
-    }
-
-    public override Stream ToStream<T>(T input)
-    {
-        var streamPayload = new MemoryStream();
-        _jsonObjectSerializer.Serialize(streamPayload, input, typeof(T), default);
-        streamPayload.Position = 0;
-        return streamPayload;
-    }
-}
-
-public record SekibanCosmosClientOptions
-{
-    /// <summary>
-    ///     Cosmos Db Options.
-    /// </summary>
-    public CosmosClientOptions ClientOptions { get; init; } = new()
-    {
-        Serializer = new SekibanCosmosSerializer(),
-        AllowBulkExecution = true,
-        MaxRetryAttemptsOnRateLimitedRequests = 200,
-        ConnectionMode = ConnectionMode.Gateway,
-        GatewayModeMaxConnectionLimit = 200
-    };
-}
-
 
 public class CosmosDbFactory(
     ICosmosMemoryCacheAccessor cosmosMemoryCache,
@@ -246,11 +144,11 @@ public class CosmosDbFactory(
         }
         var clientOptions = options.ClientOptions;
         client = await SearchCosmosClientAsync() ??
-            GetConnectionString() switch
-            {
-                { IsSuccess: true } value => new CosmosClient(value.GetValue(), clientOptions),
-                _ => GetCosmosClientFromUriAndKey()
-            };
+                 GetConnectionString() switch
+                 {
+                     { IsSuccess: true } value => new CosmosClient(value.GetValue(), clientOptions),
+                     _ => GetCosmosClientFromUriAndKey()
+                 };
         cosmosMemoryCache.Cache.Set(GetMemoryCacheClientKey(documentType), client, new MemoryCacheEntryOptions());
         return client;
     }
@@ -325,75 +223,5 @@ public class CosmosDbFactory(
         cosmosMemoryCache.Cache.Remove(GetMemoryCacheContainerKey(documentType, databaseId, containerId));
     }
 
-    private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/RootPartitionKey", "/AggregateType", "/PartitionKey"];
+    private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/RootPartitionKey", "/AggregateGroup", "/PartitionKey"];
 }
-
-public record SekibanAzureCosmosDbOption
-{
-    public const string CosmosEventsContainerDefaultValue = "events";
-    public const string CosmosItemsContainerDefaultValue = "items";
-    public const string CosmosConnectionStringNameDefaultValue = "SekibanCosmos";
-    public const string CosmosDatabaseDefaultValue = "SekibanDb";
-    public const bool LegacyPartitionDefaultValue = false;
-
-    public string CosmosEventsContainer { get; init; } = CosmosEventsContainerDefaultValue;
-    public string CosmosItemsContainer { get; init; } = CosmosItemsContainerDefaultValue;
-    public string? CosmosEndPointUrl { get; init; }
-    public string? CosmosAuthorizationKey { get; init; }
-    public string CosmosConnectionStringName { get; init; } = CosmosConnectionStringNameDefaultValue;
-    public string? CosmosConnectionString { get; init; }
-    public string CosmosDatabase { get; init; } = CosmosDatabaseDefaultValue;
-
-    public bool LegacyPartitions { get; init; }
-
-    public static SekibanAzureCosmosDbOption FromConfiguration(
-        IConfigurationSection section,
-        IConfigurationRoot configurationRoot)
-    {
-        var azureSection = section.GetSection("Azure");
-
-        var eventsContainer = azureSection.GetValue<string>(nameof(CosmosEventsContainer)) ??
-            azureSection.GetValue<string>("CosmosDbEventsContainer") ??
-            azureSection.GetValue<string>("AggregateEventCosmosDbContainer") ?? CosmosEventsContainerDefaultValue;
-        var itemsContainer = azureSection.GetValue<string>(nameof(CosmosItemsContainer)) ??
-            azureSection.GetValue<string>("CosmosDbItemsContainer") ??
-            azureSection.GetValue<string>("CosmosDbContainer") ??
-            azureSection.GetValue<string>("CosmosDbCommandsContainer") ??
-            azureSection.GetValue<string>("AggregateCommandCosmosDbContainer") ?? CosmosItemsContainerDefaultValue;
-
-        var cosmosEndPointUrl = azureSection.GetValue<string>(nameof(CosmosEndPointUrl)) ?? azureSection.GetValue<string>("CosmosDbEndPointUrl");
-        var cosmosAuthorizationKey = azureSection.GetValue<string>(nameof(CosmosAuthorizationKey)) ??
-            azureSection.GetValue<string>("CosmosDbAuthorizationKey");
-        var cosmosConnectionStringName = azureSection.GetValue<string>(nameof(CosmosConnectionStringName)) ?? CosmosConnectionStringNameDefaultValue;
-        var cosmosConnectionString = configurationRoot.GetConnectionString(cosmosConnectionStringName) ??
-            section.GetValue<string>(nameof(CosmosConnectionString)) ?? section.GetValue<string>("CosmosDbConnectionString");
-        var cosmosDatabase = azureSection.GetValue<string>(nameof(CosmosDatabase)) ??
-            azureSection.GetValue<string>("CosmosDbDatabase") ?? CosmosDatabaseDefaultValue;
-
-
-        var legacyPartition = azureSection.GetValue<bool?>(nameof(LegacyPartitions)) ?? LegacyPartitionDefaultValue;
-
-        return new SekibanAzureCosmosDbOption
-        {
-            CosmosEventsContainer = eventsContainer,
-            CosmosItemsContainer = itemsContainer,
-            CosmosConnectionString = cosmosConnectionString,
-            CosmosConnectionStringName = cosmosConnectionStringName,
-            CosmosEndPointUrl = cosmosEndPointUrl,
-            CosmosAuthorizationKey = cosmosAuthorizationKey,
-            CosmosDatabase = cosmosDatabase,
-            LegacyPartitions = legacyPartition
-        };
-    }
-}
-
-public record CosmosEventInfo
-{
-    [JsonPropertyName("id")]
-    public Guid Id { get; init; }
-    public string PartitionKey { get; init; } = string.Empty;
-    public string RootPartitionKey { get; init; } = string.Empty;
-    public string AggregateType { get; init; } = string.Empty;
-}
-
-

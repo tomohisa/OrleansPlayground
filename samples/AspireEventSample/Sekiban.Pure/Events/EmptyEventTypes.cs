@@ -14,4 +14,9 @@ public class EmptyEventTypes : IEventTypes
     {
         return ResultBox<IEvent>.FromException(new SekibanEventTypeNotFoundException(""));
     }
+
+    public ResultBox<IEventDocument> ConvertToEventDocument(IEvent ev)
+    {
+        return ResultBox<IEventDocument>.FromException(new SekibanEventTypeNotFoundException(""));
+    }
 }

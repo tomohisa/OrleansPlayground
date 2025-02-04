@@ -36,8 +36,8 @@ public class AggregateEventHandlerGrain(
         await state.WriteStateAsync();
         _events.AddRange(toStoreEvents);
         var orleansEvents = toStoreEvents.ToOrleansEvents();
-        var stream = streamProvider.GetStream<OrleansEvent>(StreamId.Create("AllEvents", Guid.Empty));
         if (toStoreEvents.Count != 0) await eventWriter.SaveEvents(toStoreEvents);
+        var stream = streamProvider.GetStream<OrleansEvent>(StreamId.Create("AllEvents", Guid.Empty));
         foreach (var ev in orleansEvents) await stream.OnNextAsync(ev);
         return await Task.FromResult(orleansEvents);
     }

@@ -10,6 +10,8 @@ public interface IEventTypes
         PartitionKeys partitionKeys,
         string sortableUniqueId,
         int version,
-
       EventMetadata metadata);
+
+    public ResultBox<IEventDocument> ConvertToEventDocument(
+        IEvent ev);
 }

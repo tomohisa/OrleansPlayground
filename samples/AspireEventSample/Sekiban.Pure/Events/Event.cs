@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 
@@ -27,7 +28,22 @@ public record EventMetadata(string CausationId, string CorrelationId, string Exe
     }
 }
 
+public interface IEventDocument
+{
+    Guid Id { get; }
+    string SortableUniqueId { get; }
+    int Version { get; }
+    Guid AggregateId { get; }
+    string AggregateGroup { get; }
+    string RootPartitionKey { get; }
+    string PayloadTypeName { get; }
+    DateTime TimeStamp { get; }
+    string PartitionKey { get; }
+    EventMetadata Metadata { get; }
+}
+
 public record EventDocument<TEventPayload>(
+    [property:JsonPropertyName("id")]
     Guid Id,
     TEventPayload Payload,
     string SortableUniqueId,
@@ -38,13 +54,14 @@ public record EventDocument<TEventPayload>(
     string PayloadTypeName,
     DateTime TimeStamp,
     string PartitionKey,
-    EventMetadata Metadata) where TEventPayload : IEventPayload
+    EventMetadata Metadata) : IEventDocument where TEventPayload : IEventPayload
 {
-    public static EventDocument<TEventPayload> FromEvent(Event<TEventPayload> @event, string payloadTypeName)
+    public static EventDocument<TEventPayload> FromEvent(Event<TEventPayload> ev, string payloadTypeName)
     {
-        return new EventDocument<TEventPayload>(@event.Id, @event.Payload, @event.SortableUniqueId, @event.Version,
-            @event.PartitionKeys.AggregateId, @event.PartitionKeys.Group,
-            @event.PartitionKeys.RootPartitionKey, payloadTypeName, DateTime.UtcNow,
-            @event.PartitionKeys.ToPrimaryKeysString(), @event.Metadata);
+        var sortableUniqueIdValue = new SortableUniqueIdValue(ev.SortableUniqueId);
+        return new EventDocument<TEventPayload>(ev.Id, ev.Payload, ev.SortableUniqueId, ev.Version,
+            ev.PartitionKeys.AggregateId, ev.PartitionKeys.Group,
+            ev.PartitionKeys.RootPartitionKey, payloadTypeName, sortableUniqueIdValue.GetTicks() ,
+            ev.PartitionKeys.ToPrimaryKeysString(), ev.Metadata);
     }
 }
