@@ -23,7 +23,6 @@ public class EventTypesGenerator : IIncrementalGenerator
         // Combine with compilation information
         var compilationAndTypes = context.CompilationProvider.Combine(typeDeclarations.Collect());
 
-
         // Generate source code
         context.RegisterSourceOutput(
             compilationAndTypes,
@@ -39,8 +38,8 @@ public class EventTypesGenerator : IIncrementalGenerator
                 var sourceCode = GenerateSourceCode(commandTypes.ToImmutable(), rootNamespace);
                 ctx.AddSource("EventTypes.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
             });
-
     }
+
     public ImmutableArray<CommandWithHandlerValues> GetEventValues(
         Compilation compilation,
         ImmutableArray<SyntaxNode> types)
@@ -81,6 +80,7 @@ public class EventTypesGenerator : IIncrementalGenerator
         sb.AppendLine("using Sekiban.Pure.Events;");
         sb.AppendLine("using Sekiban.Pure.Documents;");
         sb.AppendLine("using Sekiban.Pure.Extensions;");
+        sb.AppendLine("using System.Text.Json.Serialization;");
 
         sb.AppendLine();
         sb.AppendLine($"namespace {rootNamespace}.Generated");
@@ -136,10 +136,21 @@ public class EventTypesGenerator : IIncrementalGenerator
         sb.AppendLine("                new SekibanEventTypeNotFoundException($\"Event Type {ev.GetPayload().GetType().Name} Not Found\"))");
         sb.AppendLine("        };");
         sb.AppendLine("    }");
+        sb.AppendLine("/***");
+        sb.AppendLine("    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]");
+        foreach (var type in eventTypes)
+        {
+            sb.AppendLine($"    [JsonSerializable(typeof(EventDocument<{type.RecordName}>))]");
+        }
+        sb.AppendLine($"    public partial class {rootNamespace.Replace(".", "")}EventsJsonContext : JsonSerializerContext");
+        sb.AppendLine("    {");
+        sb.AppendLine("    }");
+        sb.AppendLine("*****/");
         sb.AppendLine("}");
 
         return sb.ToString();
     }
+
     public class CommandWithHandlerValues
     {
         public string InterfaceName { get; set; } = string.Empty;

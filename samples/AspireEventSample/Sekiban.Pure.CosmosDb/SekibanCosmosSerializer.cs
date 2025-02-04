@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Core.Serialization;
 using Microsoft.Azure.Cosmos;
@@ -6,7 +7,7 @@ namespace Sekiban.Pure.CosmosDb;
 
 public class SekibanCosmosSerializer() : CosmosSerializer
 {
-    private readonly JsonObjectSerializer _jsonObjectSerializer = new(new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, PropertyNameCaseInsensitive = true });
+    private readonly JsonObjectSerializer _jsonObjectSerializer = new(new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, PropertyNameCaseInsensitive = false, PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
 // can use source generator serialization.
     public override T FromStream<T>(Stream stream)
     {
