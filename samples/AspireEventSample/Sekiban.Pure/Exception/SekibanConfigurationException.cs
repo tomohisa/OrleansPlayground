@@ -1,4 +1,4 @@
 namespace Sekiban.Pure.Exception;
 
-public class SekibanAggregateTypeRestrictionException(string message)
+public class SekibanConfigurationException(string message)
     : ApplicationException(message), ISekibanException;
