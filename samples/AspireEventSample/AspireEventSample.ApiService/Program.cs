@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using ResultBoxes;
 using Scalar.AspNetCore;
 using Sekiban.Pure.Command.Handlers;
+using Sekiban.Pure.CosmosDb;
 using Sekiban.Pure.Documents;
+using Sekiban.Pure.Events;
 using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Types;
 
@@ -34,6 +36,15 @@ builder.Services.AddSingleton(new SekibanTypeConverters(new AspireEventSampleApi
     new AspireEventSampleApiServiceEventTypes(), new AspireEventSampleApiServiceAggregateProjectorSpecifier()));
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddSingleton(new SekibanCosmosClientOptions());
+builder.Services.AddTransient<IEventWriter, CosmosDbEventWriter>();
+builder.Services.AddTransient<CosmosDbFactory>();
+builder.Services.AddTransient<ICosmosMemoryCacheAccessor, CosmosMemoryCacheAccessor>();
+builder.Services.AddTransient<IEventTypes, AspireEventSampleApiServiceEventTypes>();
+var dbOption = SekibanAzureCosmosDbOption.FromConfiguration(builder.Configuration.GetSection("Sekiban"), builder.Configuration);
+builder.Services.AddSingleton(dbOption);
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Exception;
+
 namespace Sekiban.Pure.Events;
 
 public class EmptyEventTypes : IEventTypes
@@ -9,5 +10,13 @@ public class EmptyEventTypes : IEventTypes
         IEventPayload payload,
         PartitionKeys partitionKeys,
         string sortableUniqueId,
-        int version, EventMetadata metadata) => ResultBox<IEvent>.FromException(new SekibanEventTypeNotFoundException(""));
+        int version, EventMetadata metadata)
+    {
+        return ResultBox<IEvent>.FromException(new SekibanEventTypeNotFoundException(""));
+    }
+
+    public ResultBox<IEventDocument> ConvertToEventDocument(IEvent ev)
+    {
+        return ResultBox<IEventDocument>.FromException(new SekibanEventTypeNotFoundException(""));
+    }
 }

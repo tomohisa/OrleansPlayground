@@ -116,7 +116,26 @@ public class EventTypesGenerator : IIncrementalGenerator
         sb.AppendLine(
             "                new SekibanEventTypeNotFoundException($\"Event Type {payload.GetType().Name} Not Found\"))");
         sb.AppendLine("        };");
-        sb.AppendLine("    };");
+        sb.AppendLine();
+        sb.AppendLine("        public ResultBox<IEventDocument> ConvertToEventDocument(");
+        sb.AppendLine("            IEvent ev) => ev switch");
+        sb.AppendLine("        {");
+
+        foreach (var type in eventTypes)
+        {
+            switch (type.InterfaceName, type.TypeCount)
+            {
+                case ("IEventPayload", 0):
+                    sb.AppendLine($"            Event<{type.RecordName}> {type.RecordName.Split('.').Last()}Event => EventDocument<{type.RecordName}>.FromEvent(");
+                    sb.AppendLine($"                {type.RecordName.Split('.').Last()}Event),");
+                    break;
+            }
+        }
+
+        sb.AppendLine("            _ => ResultBox<IEventDocument>.FromException(");
+        sb.AppendLine("                new SekibanEventTypeNotFoundException($\"Event Type {ev.GetPayload().GetType().Name} Not Found\"))");
+        sb.AppendLine("        };");
+        sb.AppendLine("    }");
         sb.AppendLine("}");
 
         return sb.ToString();
