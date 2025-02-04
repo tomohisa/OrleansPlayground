@@ -51,13 +51,14 @@ public class AggregateEventHandlerGrain(
         var index = _events.FindIndex(e => e.SortableUniqueId == fromSortableUniqueId);
 
         if (index < 0)
-            return Task.FromResult((IReadOnlyList<OrleansEvent>)new IEvent[0]);
+            return Task.FromResult<IReadOnlyList<OrleansEvent>>(new List<OrleansEvent>());
 
-        var events = _events.Skip(index + 1)
-            .Take(limit ?? int.MaxValue)
-            .ToList();
-
-        return Task.FromResult((IReadOnlyList<OrleansEvent>)events);
+        return Task.FromResult<IReadOnlyList<OrleansEvent>>(
+            _events.Skip(index + 1)
+                .Take(limit ?? int.MaxValue)
+                .ToList()
+                .ToOrleansEvents()
+                .ToList());
     }
 
     public async Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync()
