@@ -4,10 +4,12 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>3a6dc697-8150-4bdc-8cc4-f3e36aadf421</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AspireEventSample.ServiceDefaults\AspireEventSample.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Sekiban.Pure.CosmosDb\Sekiban.Pure.CosmosDb.csproj" />
     <ProjectReference Include="..\Sekiban.Pure.OrleansEventSourcing\Sekiban.Pure.OrleansEventSourcing.csproj" />
     <ProjectReference Include="..\Sekiban.Pure.SourceGenerator\Sekiban.Pure.SourceGenerator.csproj">
       <OutputItemType>Analyzer</OutputItemType>

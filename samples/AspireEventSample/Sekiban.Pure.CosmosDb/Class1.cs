@@ -17,7 +17,7 @@ public class Class1
 {
 }
 
-public class CosmosDbEventWriter(ICosmosDbFactory dbFactory) : IEventWriter
+public class CosmosDbEventWriter(CosmosDbFactory dbFactory) : IEventWriter
 {
     
     public Task SaveEvents<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent=> dbFactory.CosmosActionAsync(
@@ -25,6 +25,7 @@ public class CosmosDbEventWriter(ICosmosDbFactory dbFactory) : IEventWriter
         async container =>
         {
             var taskList = events
+                // .Select(ev => ev.)
                 .Select(ev => container.UpsertItemAsync<dynamic>(ev, CosmosPartitionGenerator.ForEvent(ev.PartitionKeys)))
                 .ToList();
             await Task.WhenAll(taskList);
@@ -43,24 +44,27 @@ public class CosmosPartitionGenerator
 
 
 
-public interface ICosmosDbFactory
-{
-    Task<T> CosmosActionAsync<T>(DocumentType documentType,Func<Container, Task<T>> cosmosAction);
 
-    Task CosmosActionAsync(DocumentType documentType,Func<Container, Task> cosmosAction);
-
-    Task DeleteAllFromEventContainer();
-}
 /// <summary>
 ///     Use this to access memory cache instance.
 ///     In should share same instance over threads.
 /// </summary>
-public interface IMemoryCacheAccessor
+public interface ICosmosMemoryCacheAccessor
 {
     /// <summary>
     ///     Get shared memory cache instance.
     /// </summary>
     IMemoryCache Cache { get; }
+}
+/// <summary>
+///     Memory cache accessor
+///     Note: This class is for internal use only
+/// </summary>
+public class CosmosMemoryCacheAccessor : ICosmosMemoryCacheAccessor
+{
+    private static IMemoryCache? staticMemoryCache;
+    public CosmosMemoryCacheAccessor(IMemoryCache memoryCache) => Cache = staticMemoryCache ??= memoryCache;
+    public IMemoryCache Cache { get; }
 }
 
 
@@ -107,8 +111,8 @@ public record SekibanCosmosClientOptions
 
 
 public class CosmosDbFactory(
-    IMemoryCacheAccessor memoryCache,
-    SekibanCosmosClientOptions options, SekibanAzureCosmosDbOption sekibanAzureCosmosDbOptions) : ICosmosDbFactory
+    ICosmosMemoryCacheAccessor cosmosMemoryCache,
+    SekibanCosmosClientOptions options, SekibanAzureCosmosDbOption sekibanAzureCosmosDbOptions)
 {
     public Func<Task<CosmosClient?>> SearchCosmosClientAsync { get; set; } = async () =>
     {
@@ -197,26 +201,26 @@ public class CosmosDbFactory(
     {
         var databaseId = GetDatabaseId();
         var containerId = GetContainerId(documentType);
-        return (Container?)memoryCache.Cache.Get(GetMemoryCacheContainerKey(documentType, databaseId, containerId));
+        return (Container?)cosmosMemoryCache.Cache.Get(GetMemoryCacheContainerKey(documentType, databaseId, containerId));
     }
     public void SetContainerToCache(DocumentType documentType, Container container)
     {
         var databaseId = GetDatabaseId();
         var containerId = GetContainerId(documentType);
-        memoryCache.Cache.Set(
+        cosmosMemoryCache.Cache.Set(
             GetMemoryCacheContainerKey(documentType, databaseId, containerId),
             container,
             new MemoryCacheEntryOptions());
     }
     public async Task<Database> GetDatabaseAsync(DocumentType documentType, CosmosClient client)
     {
-        var database = memoryCache.Cache.Get<Database?>(GetMemoryCacheDatabaseKey(documentType, GetDatabaseId()));
+        var database = cosmosMemoryCache.Cache.Get<Database?>(GetMemoryCacheDatabaseKey(documentType, GetDatabaseId()));
         if (database is not null)
         {
             return database;
         }
         database = await client.CreateDatabaseIfNotExistsAsync(GetDatabaseId());
-        memoryCache.Cache.Set(
+        cosmosMemoryCache.Cache.Set(
             GetMemoryCacheDatabaseKey(documentType, GetDatabaseId()),
             database,
             new MemoryCacheEntryOptions());
@@ -235,7 +239,7 @@ public class CosmosDbFactory(
     public async Task<CosmosClient> GetCosmosClientAsync(DocumentType documentType)
     {
         await Task.CompletedTask;
-        var client = memoryCache.Cache.Get<CosmosClient?>(GetMemoryCacheClientKey(documentType));
+        var client = cosmosMemoryCache.Cache.Get<CosmosClient?>(GetMemoryCacheClientKey(documentType));
         if (client is not null)
         {
             return client;
@@ -247,7 +251,7 @@ public class CosmosDbFactory(
                 { IsSuccess: true } value => new CosmosClient(value.GetValue(), clientOptions),
                 _ => GetCosmosClientFromUriAndKey()
             };
-        memoryCache.Cache.Set(GetMemoryCacheClientKey(documentType), client, new MemoryCacheEntryOptions());
+        cosmosMemoryCache.Cache.Set(GetMemoryCacheClientKey(documentType), client, new MemoryCacheEntryOptions());
         return client;
     }
     private CosmosClient GetCosmosClientFromUriAndKey()
@@ -316,9 +320,9 @@ public class CosmosDbFactory(
         var databaseId = GetDatabaseId();
         // There may be a network error, so initialize the container.
         // This allows reconnection when recovered next time.
-        memoryCache.Cache.Remove(GetMemoryCacheClientKey(documentType));
-        memoryCache.Cache.Remove(GetMemoryCacheDatabaseKey(documentType, databaseId));
-        memoryCache.Cache.Remove(GetMemoryCacheContainerKey(documentType, databaseId, containerId));
+        cosmosMemoryCache.Cache.Remove(GetMemoryCacheClientKey(documentType));
+        cosmosMemoryCache.Cache.Remove(GetMemoryCacheDatabaseKey(documentType, databaseId));
+        cosmosMemoryCache.Cache.Remove(GetMemoryCacheContainerKey(documentType, databaseId, containerId));
     }
 
     private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/RootPartitionKey", "/AggregateType", "/PartitionKey"];
