@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
@@ -230,16 +231,18 @@ public class CosmosDbFactory(
     // private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/RootPartitionKey", "/AggregateGroup", "/PartitionKey"];
 }
 
-public class SourceGenCosmosSerializer : CosmosSerializer
+public class SourceGenCosmosSerializer<TEventTypes> : CosmosSerializer where TEventTypes : IEventTypes, new()
 {
     private readonly JsonSerializerOptions _serializerOptions;
 
-    public SourceGenCosmosSerializer(JsonSerializerOptions serializerOptions = null)
+    public SourceGenCosmosSerializer(JsonSerializerOptions serializerOptions)
     {
+        var eventTypes = new TEventTypes();
+        // check if all event types are registered
+        eventTypes.CheckEventJsonContextOption(serializerOptions);
         // ソースジェネレーターで生成されたオプションを利用できるようにする
-        _serializerOptions = serializerOptions ?? new JsonSerializerOptions();
+        _serializerOptions = serializerOptions ?? new JsonSerializerOptions() { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase};
     }
-
     public override T FromStream<T>(Stream stream)
     {
         if (stream == null)
@@ -256,6 +259,12 @@ public class SourceGenCosmosSerializer : CosmosSerializer
         // Cosmos DB SDK の仕様により、ストリームは SDK 内で閉じられるので using で囲む
         using (stream)
         {
+            var typeInfo = _serializerOptions.GetTypeInfo(typeof(T)) as JsonTypeInfo<T>;
+            if (typeInfo != null)
+            {
+                // ソースジェネレータで最適化されたデシリアライゼーション
+                return (T)JsonSerializer.Deserialize(stream, typeInfo);
+            }
             // ※ 同期処理で呼び出すために GetAwaiter().GetResult() を利用
             return JsonSerializer.Deserialize<T>(stream, _serializerOptions);
         }

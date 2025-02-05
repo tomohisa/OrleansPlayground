@@ -25,4 +25,9 @@ public class EmptyEventTypes : IEventTypes
     {
         return ResultBox<IEvent>.FromException(new SekibanEventTypeNotFoundException(""));
     }
+
+    public void CheckEventJsonContextOption(JsonSerializerOptions options)
+    {
+        throw new NotImplementedException();
+    }
 }
