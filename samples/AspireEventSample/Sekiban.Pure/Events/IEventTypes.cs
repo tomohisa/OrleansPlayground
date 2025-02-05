@@ -18,4 +18,6 @@ public interface IEventTypes
 
     public ResultBox<IEvent> DeserializeToTyped(
         EventDocumentCommon common, JsonSerializerOptions serializeOptions);
+
+    public void CheckEventJsonContextOption(JsonSerializerOptions options);
 }
