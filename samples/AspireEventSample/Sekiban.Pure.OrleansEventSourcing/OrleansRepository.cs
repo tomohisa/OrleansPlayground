@@ -12,7 +12,9 @@ public class OrleansRepository(IAggregateEventHandlerGrain eventHandlerGrain, Pa
         => ResultBox.FromValue(eventHandlerGrain.GetAllEventsAsync())
             .Remap(events => events.ToList().ToEvents(eventTypes))
             .Conveyor(events=> aggregate.Project(events, projector));
-    
+
+    public Task<ResultBox<Aggregate>> GetAggregate()
+        => aggregate.ToResultBox().ToTask();
 
     public Task<ResultBox<List<IEvent>>> Save(string lastSortableUniqueId, List<IEvent> events)
         => ResultBox.WrapTry(() => eventHandlerGrain.AppendEventsAsync(lastSortableUniqueId, events.ToOrleansEvents()))
