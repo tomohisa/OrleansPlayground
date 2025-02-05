@@ -81,7 +81,7 @@ public class AggregateProjectorGrain(
         var commandExecutor = new CommandExecutor() {EventTypes = typeConverters.EventTypes };
         var result = await commandExecutor.ExecuteGeneralNonGeneric(orleansCommand, 
             GetPartitionKeysAndProjector().Projector, GetPartitionKeysAndProjector().PartitionKeys, NoInjection.Empty, 
-            orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType(), metadata.ToCommandMetadata(),(_, _) => orleansRepository.Load(), orleansRepository.Save ).UnwrapBox();
+            orleansCommand.GetHandler(), orleansCommand.GetAggregatePayloadType(), metadata.ToCommandMetadata(),(_, _) => orleansRepository.GetAggregate(), orleansRepository.Save ).UnwrapBox();
         state.State = orleansRepository.GetProjectedAggregate(result.Events).UnwrapBox();
         UpdatedAfterWrite = true;
         return result.ToOrleansCommandResponse();
