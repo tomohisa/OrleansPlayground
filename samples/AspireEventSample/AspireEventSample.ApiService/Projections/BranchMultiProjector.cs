@@ -1,13 +1,17 @@
 using System.Collections.Immutable;
 using AspireEventSample.ApiService.Aggregates.Branches;
+using Orleans;
 using ResultBoxes;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 
 namespace AspireEventSample.ApiService.Projections;
-public record BranchMultiProjector(ImmutableDictionary<Guid, BranchMultiProjector.BranchRecord> Branches) : IMultiProjector<BranchMultiProjector>
+
+[GenerateSerializer]
+public record BranchMultiProjector([property: Id(1)] ImmutableDictionary<Guid, BranchMultiProjector.BranchRecord> Branches) : IMultiProjector<BranchMultiProjector>
 {
-    public record BranchRecord(Guid BranchId, string BranchName);
+    [GenerateSerializer]
+    public record BranchRecord([property: Id(1)] Guid BranchId, [property: Id(2)] string BranchName);
 
     public ResultBox<BranchMultiProjector> Project(BranchMultiProjector payload, IEvent ev)
         => ev.GetPayload() switch

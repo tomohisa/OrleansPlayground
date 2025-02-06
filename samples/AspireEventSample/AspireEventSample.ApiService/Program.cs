@@ -2,6 +2,7 @@ using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Grains;
+using AspireEventSample.ApiService.Projections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using ResultBoxes;
@@ -88,6 +89,14 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapGet("/getMultiProjection", ([FromServices]IClusterClient clusterClient) =>
+{
+    var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
+    multiProjectorGrain.RebuildStateAsync();
+    return multiProjectorGrain.GetStateAsync();
+}).WithName("GetMultiProjection")
+    .WithOpenApi();
 
 app.MapDefaultEndpoints();
 

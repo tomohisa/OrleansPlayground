@@ -110,12 +110,8 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
         }
 
         var projector = GetProjectorFromGrainName();
-        var info = EventRetrievalInfo.FromNullableValues(
-            rootPartitionKey: safeState.State.RootPartitionKey,
-            aggregatesStream: new AggregateGroupStream(this.GetPrimaryKeyString()),
-            aggregateId: null,
-            sortableIdCondition: ISortableIdCondition.Since(new SortableUniqueIdValue(safeState.State.LastSortableUniqueId)));
-
+        var info = EventRetrievalInfo.All with { SortableIdCondition = ISortableIdCondition.Since(new SortableUniqueIdValue(safeState.State.LastSortableUniqueId)) };
+        
         var events = (await eventReader.GetEvents(info)).UnwrapBox();
         if (!events.Any())
         {
