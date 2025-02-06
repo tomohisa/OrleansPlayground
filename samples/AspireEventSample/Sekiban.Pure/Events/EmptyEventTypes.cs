@@ -1,7 +1,7 @@
 using System.Text.Json;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
-using Sekiban.Pure.Exception;
+using Sekiban.Pure.Exceptions;
 
 namespace Sekiban.Pure.Events;
 

@@ -1,4 +1,4 @@
-using Sekiban.Pure.Exception;
+using Sekiban.Pure.Exceptions;
 namespace Sekiban.Pure.Query;
 
 /// <summary>

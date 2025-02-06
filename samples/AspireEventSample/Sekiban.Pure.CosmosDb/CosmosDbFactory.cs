@@ -7,7 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
-using Sekiban.Pure.Exception;
+using Sekiban.Pure.Exceptions;
 
 namespace Sekiban.Pure.CosmosDb;
 

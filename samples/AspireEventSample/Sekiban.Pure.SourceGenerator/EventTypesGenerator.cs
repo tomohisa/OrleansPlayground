@@ -76,7 +76,7 @@ public class EventTypesGenerator : IIncrementalGenerator
         sb.AppendLine("using System.Threading.Tasks;");
         sb.AppendLine("using ResultBoxes;");
         sb.AppendLine("using Sekiban.Pure;");
-        sb.AppendLine("using Sekiban.Pure.Exception;");
+        sb.AppendLine("using Sekiban.Pure.Exceptions;");
         sb.AppendLine("using Sekiban.Pure.Events;");
         sb.AppendLine("using Sekiban.Pure.Documents;");
         sb.AppendLine("using Sekiban.Pure.Extensions;");
