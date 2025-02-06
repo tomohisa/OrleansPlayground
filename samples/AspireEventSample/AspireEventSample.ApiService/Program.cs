@@ -11,6 +11,7 @@ using Sekiban.Pure.CosmosDb;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Types;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,6 +59,8 @@ var dbOption = SekibanAzureCosmosDbOption.FromConfiguration(builder.Configuratio
 builder.Services.AddSingleton(dbOption);
 builder.Services.AddTransient<IEventReader, CosmosDbEventReader>();
 builder.Services.AddMemoryCache();
+
+builder.Services.AddTransient<IMultiProjectorsType, AspireEventSampleApiServiceMultiProjectorType>();
 
 var app = builder.Build();
 
