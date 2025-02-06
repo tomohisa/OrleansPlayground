@@ -21,19 +21,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await base.OnActivateAsync(cancellationToken);
-        
-        if (safeState.State is null)
-        {
-            var projector = GetProjectorFromGrainName();
-            var newState = new OrleansMultiProjectorState(
-                projector,
-                Guid.Empty,
-                string.Empty,
-                0,
-                0,
-                "default");
-            await safeState.WriteStateAsync();
-        }
+        await safeState.ReadStateAsync();
     }
     
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
@@ -107,7 +95,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
 
     public async Task BuildStateAsync()
     {
-        if (safeState.State is null)
+        if (safeState.RecordExists == false)
         {
             await RebuildStateAsync();
             return;

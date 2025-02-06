@@ -10,12 +10,6 @@ namespace Sekiban.Pure.CosmosDb;
 public class CosmosDbEventReader(CosmosDbFactory dbFactory, IEventTypes eventTypes) : IEventReader
 {
     private const int DefaultOptionsMax = -1;
-    private static QueryRequestOptions CreateDefaultOptions() =>
-        new()
-        {
-            MaxConcurrency = DefaultOptionsMax, MaxItemCount = DefaultOptionsMax,
-            MaxBufferedItemCount = DefaultOptionsMax
-        };
 
     public async Task<ResultBox<IReadOnlyList<IEvent>>> GetEvents(EventRetrievalInfo eventRetrievalInfo)
     {
@@ -26,9 +20,13 @@ public class CosmosDbEventReader(CosmosDbFactory dbFactory, IEventTypes eventTyp
                 if (eventRetrievalInfo.GetIsPartition())
                 {
                     var options = CreateDefaultOptions();
-                    options.PartitionKey = CosmosPartitionGenerator.ForAggregate(PartitionKeys.Existing(eventRetrievalInfo.AggregateId.GetValue(), 
-                        eventRetrievalInfo.AggregateStream.GetValue().GetSingleStreamName().UnwrapBox(),eventRetrievalInfo.RootPartitionKey.GetValue()));
-                    var query = container.GetItemLinqQueryable<IEventDocument>();
+                    options.PartitionKey = CosmosPartitionGenerator.ForAggregate(PartitionKeys.Existing(
+                        eventRetrievalInfo.AggregateId.GetValue(),
+                        eventRetrievalInfo.AggregateStream.GetValue().GetSingleStreamName().UnwrapBox(),
+                        eventRetrievalInfo.RootPartitionKey.GetValue()));
+                    var query = container.GetItemLinqQueryable<EventDocumentCommon>(
+                        linqSerializerOptions: new CosmosLinqSerializerOptions
+                            { PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase });
                     query = eventRetrievalInfo.SortableIdCondition switch
                     {
                         (SinceSortableIdCondition since) => query
@@ -60,20 +58,23 @@ public class CosmosDbEventReader(CosmosDbFactory dbFactory, IEventTypes eventTyp
                     }
 
                     return events;
-                } else
+                }
+                else
                 {
                     var options = CreateDefaultOptions();
 
-                    var query = container.GetItemLinqQueryable<IEventDocument>().AsQueryable();
+                    var query = container
+                        .GetItemLinqQueryable<EventDocumentCommon>(
+                            linqSerializerOptions: new CosmosLinqSerializerOptions
+                                { PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase }).AsQueryable();
                     if (eventRetrievalInfo.HasAggregateStream())
                     {
                         var aggregates = eventRetrievalInfo.AggregateStream.GetValue().GetStreamNames();
                         query = query.Where(m => aggregates.Contains(m.AggregateGroup));
                     }
+
                     if (eventRetrievalInfo.HasRootPartitionKey())
-                    {
                         query = query.Where(m => m.RootPartitionKey == eventRetrievalInfo.RootPartitionKey.GetValue());
-                    }
                     query = eventRetrievalInfo.SortableIdCondition switch
                     {
                         (SinceSortableIdCondition since) => query
@@ -108,23 +109,27 @@ public class CosmosDbEventReader(CosmosDbFactory dbFactory, IEventTypes eventTyp
                 }
             });
     }
-    
-    private List<IEvent> ProcessEvents(IEnumerable<EventDocumentCommon> response, ISortableIdCondition sortableIdCondition)
+
+    private static QueryRequestOptions CreateDefaultOptions()
+    {
+        return new QueryRequestOptions
+        {
+            MaxConcurrency = DefaultOptionsMax, MaxItemCount = DefaultOptionsMax,
+            MaxBufferedItemCount = DefaultOptionsMax
+        };
+    }
+
+    private List<IEvent> ProcessEvents(IEnumerable<EventDocumentCommon> response,
+        ISortableIdCondition sortableIdCondition)
     {
         var events = new List<IEvent>();
         foreach (var item in response)
         {
             // pick out one item
-            if (string.IsNullOrWhiteSpace(item.PayloadTypeName))
-            {
-                continue;
-            }
+            if (string.IsNullOrWhiteSpace(item.PayloadTypeName)) continue;
 
             var converted = eventTypes.DeserializeToTyped(item, dbFactory.GetJsonSerializerOptions());
-            if (converted.IsSuccess)
-            {
-                events.Add(converted.GetValue());
-            }
+            if (converted.IsSuccess) events.Add(converted.GetValue());
             // var toAdd = (registeredEventTypes
             //                  .RegisteredTypes
             //                  .Where(m => m.Name == typeName)
