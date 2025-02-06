@@ -1,4 +1,9 @@
+using ResultBoxes;
+using Sekiban.Pure.Documents;
+using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
+using System.Linq;
+using Orleans.Runtime;
 
 namespace Sekiban.Pure.OrleansEventSourcing;
 
@@ -15,11 +20,21 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
     
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        
         await base.OnActivateAsync(cancellationToken);
-        // if state is not yet saved create new empty state using GetProjectorFromGrainName and save it.
-        // save state
+        
+        if (safeState.State is null)
+        {
+            var projector = GetProjectorFromGrainName();
+            var newState = new OrleansMultiProjectorState(
+                projector,
+                Guid.Empty,
+                string.Empty,
+                0,
+                "default");
+            await safeState.WriteStateAsync();
+        }
     }
+    
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
         await base.OnDeactivateAsync(reason, cancellationToken);
@@ -27,15 +42,134 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
 
     public async Task RebuildStateAsync()
     {
-        // get all state and project events from initial state. Save only SafeStateTime past events only to safe state.
-        // and last SafeStateTime projection should save to UnsafeState.
+        var projector = GetProjectorFromGrainName();
+        var info = EventRetrievalInfo.All;  
+        var events = (await eventReader.GetEvents(info)).UnwrapBox();
+        var currentTime = DateTime.UtcNow;
+        var safeTimeThreshold = currentTime.Subtract(SafeStateTime);
+        
+        if (events.Count == 0)
+        {
+            return;
+        }
+        var projectedState = multiProjectorsType.Project(projector, events).UnwrapBox();
+
+        // Split events into safe and unsafe based on time
+        var lastEvent = events[^1];
+        var lastEventSortableId = new SortableUniqueIdValue(lastEvent.SortableUniqueId);
+        var safeTimeIdValue = new SortableUniqueIdValue(safeTimeThreshold.ToString("O"));
+        
+        if (lastEventSortableId.IsEarlierThan(safeTimeIdValue))
+        {
+            // All events are safe to persist
+            safeState.State = new OrleansMultiProjectorState(
+                projectedState,
+                lastEvent.Id,
+                lastEvent.SortableUniqueId,
+                safeState.State?.Version + 1 ?? 1,
+                safeState.State?.RootPartitionKey ?? "default");
+            await safeState.WriteStateAsync();
+            UnsafeState = null;
+        }
+        else
+        {
+            // Find split point between safe and unsafe events
+            var splitIndex = events.ToList().FindLastIndex(e => 
+                new SortableUniqueIdValue(e.SortableUniqueId).IsEarlierThan(safeTimeIdValue));
+            
+            if (splitIndex >= 0)
+            {
+                var safeEvents = events.Take(splitIndex + 1).ToList();
+                var lastSafeEvent = safeEvents[^1];
+                var safeProjectedState = multiProjectorsType.Project(projector, safeEvents).UnwrapBox();
+                safeState.State = new OrleansMultiProjectorState(
+                    safeProjectedState,
+                    lastSafeEvent.Id,
+                    lastSafeEvent.SortableUniqueId,
+                    safeState.State?.Version + 1 ?? 1,
+                    safeState.State?.RootPartitionKey ?? "default");
+                await safeState.WriteStateAsync();
+            }
+            
+            // Set unsafe state with full projection
+            UnsafeState = new OrleansMultiProjectorState(
+                projectedState,
+                lastEvent.Id,
+                lastEvent.SortableUniqueId,
+                safeState.State?.Version + 1 ?? 1,
+                safeState.State?.RootPartitionKey ?? "default");
+        }
     }
 
     public async Task BuildStateAsync()
     {
-        // get state and project events after the last saved state. Save only SafeStateTime past events only to safe state.
-        // and last SafeStateTime projection should save to UnsafeState.
+        if (safeState.State is null)
+        {
+            await RebuildStateAsync();
+            return;
+        }
+
+        var projector = GetProjectorFromGrainName();
+        var info = EventRetrievalInfo.FromNullableValues(
+            rootPartitionKey: safeState.State.RootPartitionKey,
+            aggregatesStream: new AggregateGroupStream(this.GetPrimaryKeyString()),
+            aggregateId: null,
+            sortableIdCondition: ISortableIdCondition.Since(new SortableUniqueIdValue(safeState.State.LastSortableUniqueId)));
+
+        var events = (await eventReader.GetEvents(info)).UnwrapBox();
+        if (!events.Any())
+        {
+            return;
+        }
+        var currentTime = DateTime.UtcNow;
+        var safeTimeThreshold = currentTime.Subtract(SafeStateTime);
         
+        var projectedState = multiProjectorsType.Project(safeState.State.ProjectorCommon, events).UnwrapBox();
+
+        var lastEvent = events[^1];
+        var lastEventSortableId = new SortableUniqueIdValue(lastEvent.SortableUniqueId);
+        var safeTimeIdValue = new SortableUniqueIdValue(safeTimeThreshold.ToString("O"));
+        
+        if (lastEventSortableId.IsEarlierThan(safeTimeIdValue))
+        {
+            // All new events are safe to persist
+            safeState.State = new OrleansMultiProjectorState(
+                projectedState,
+                lastEvent.Id,
+                lastEvent.SortableUniqueId,
+                safeState.State.Version + 1,
+                safeState.State.RootPartitionKey);
+            await safeState.WriteStateAsync();
+            UnsafeState = null;
+        }
+        else
+        {
+            // Find split point between safe and unsafe events
+            var splitIndex = events.ToList().FindLastIndex(e => 
+                new SortableUniqueIdValue(e.SortableUniqueId).IsEarlierThan(safeTimeIdValue));
+            
+            if (splitIndex >= 0)
+            {
+                var safeEvents = events.Take(splitIndex + 1).ToList();
+                var lastSafeEvent = safeEvents[^1];
+                var safeProjectedState = multiProjectorsType.Project(safeState.State.ProjectorCommon, safeEvents).UnwrapBox();
+                safeState.State = new OrleansMultiProjectorState(
+                    safeProjectedState,
+                    lastSafeEvent.Id,
+                    lastSafeEvent.SortableUniqueId,
+                    safeState.State.Version + 1,
+                    safeState.State.RootPartitionKey);
+                await safeState.WriteStateAsync();
+            }
+
+            // Set unsafe state with full projection
+            UnsafeState = new OrleansMultiProjectorState(
+                projectedState,
+                lastEvent.Id,
+                lastEvent.SortableUniqueId,
+                safeState.State.Version + 1,
+                safeState.State.RootPartitionKey);
+        }
     }
 
     public async Task<OrleansMultiProjectorState> GetStateAsync()
