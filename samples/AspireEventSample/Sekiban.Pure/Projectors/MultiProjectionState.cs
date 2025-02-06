@@ -32,3 +32,12 @@ public record MultiProjectionState<TMultiProjector>(
                     Version = Version + 1
                 });
 }
+public record MultiProjectorState(IMultiProjectorCommon ProjectorCommon, Guid LastEventId, string LastSortableUniqueId, int Version, string RootPartitionKey)
+{
+}
+public interface IMultiProjectorsType
+{
+    ResultBox<IMultiProjectorCommon> Project(IMultiProjectorCommon multiProjector, IEvent ev);
+    ResultBox<IMultiProjectorCommon> Project(IMultiProjectorCommon multiProjector, IReadOnlyList<IEvent> events) => ResultBox.FromValue(events.ToList())
+        .ReduceEach(multiProjector, (ev, common) => Project(common, ev));
+}
