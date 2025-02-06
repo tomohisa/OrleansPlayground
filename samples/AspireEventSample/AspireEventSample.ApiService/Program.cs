@@ -2,6 +2,7 @@ using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Grains;
+using AspireEventSample.ApiService.Projections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using ResultBoxes;
@@ -11,6 +12,7 @@ using Sekiban.Pure.CosmosDb;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Types;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,6 +61,8 @@ builder.Services.AddSingleton(dbOption);
 builder.Services.AddTransient<IEventReader, CosmosDbEventReader>();
 builder.Services.AddMemoryCache();
 
+builder.Services.AddTransient<IMultiProjectorsType, AspireEventSampleApiServiceMultiProjectorType>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -85,6 +89,15 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapGet("/getMultiProjection",async ([FromServices]IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
+{
+    var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
+    await multiProjectorGrain.RebuildStateAsync();
+    var state = await multiProjectorGrain.GetStateAsync();
+    return multiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+}).WithName("GetMultiProjection")
+    .WithOpenApi();
 
 app.MapDefaultEndpoints();
 

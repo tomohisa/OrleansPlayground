@@ -81,6 +81,11 @@ public record EventRetrievalInfo(
     {
         MaxCount = OptionalValue.FromNullableValue(MaxCount)
     };
+    public static EventRetrievalInfo All => new(
+        OptionalValue<string>.Empty,
+        OptionalValue<IAggregatesStream>.Empty,
+        OptionalValue<Guid>.Empty,
+        SortableIdConditionNone.None);
 
     public bool GetIsPartition() => AggregateId.HasValue;
     public bool HasAggregateStream() =>
