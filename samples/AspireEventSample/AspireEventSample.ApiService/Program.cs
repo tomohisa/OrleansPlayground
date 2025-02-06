@@ -1,3 +1,4 @@
+using AspireEventSample.ApiService;
 using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
 using AspireEventSample.ApiService.Generated;
@@ -68,6 +69,10 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
+
+var apiRoute = app.MapGroup("/api")
+    .AddEndpointFilter<ExceptionEndpointFilter>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -90,7 +95,7 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapGet("/getMultiProjection",async ([FromServices]IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
+apiRoute.MapGet("/getMultiProjection",async ([FromServices]IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
 {
     var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
     var state = await multiProjectorGrain.GetStateAsync();
@@ -101,7 +106,7 @@ app.MapGet("/getMultiProjection",async ([FromServices]IClusterClient clusterClie
 app.MapDefaultEndpoints();
 
 // Add new app.MapPost() method here
-app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromServices]IClusterClient clusterClient, [FromServices] IHttpContextAccessor contextAccessor) =>
+apiRoute.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromServices]IClusterClient clusterClient, [FromServices] IHttpContextAccessor contextAccessor) =>
     {
     var partitionKeyAndProjector = new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
     var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
@@ -114,7 +119,7 @@ app.MapPost("/registerbranch", async ([FromBody]RegisterBranch command, [FromSer
     
 }).WithName("RegisterBranch")
     .WithOpenApi();
-app.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [FromServices]IClusterClient clusterClient, [FromServices] IHttpContextAccessor contextAccessor) =>
+apiRoute.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [FromServices]IClusterClient clusterClient, [FromServices] IHttpContextAccessor contextAccessor) =>
     {
     var partitionKeyAndProjector = new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
     var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
@@ -127,7 +132,7 @@ app.MapPost("/changebranchname", async ([FromBody]ChangeBranchName command, [Fro
 }).WithName("ChangeBranchName")
     .WithOpenApi();
 
-app.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient, [FromServices] SekibanTypeConverters typeConverters) =>
+apiRoute.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient, [FromServices] SekibanTypeConverters typeConverters) =>
     {
         var partitionKeyAndProjector = new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
         var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
@@ -136,7 +141,7 @@ app.MapGet("/branch/{branchId}", async ([FromRoute]Guid branchId, [FromServices]
     }).WithName("GetBranch")
     .WithOpenApi();
 
-app.MapGet("/branch/{branchId}/reload", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient, [FromServices] SekibanTypeConverters typeConverters) =>
+apiRoute.MapGet("/branch/{branchId}/reload", async ([FromRoute]Guid branchId, [FromServices]IClusterClient clusterClient, [FromServices] SekibanTypeConverters typeConverters) =>
     {
         var partitionKeyAndProjector = new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
         var aggregateProjectorGrain = clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
