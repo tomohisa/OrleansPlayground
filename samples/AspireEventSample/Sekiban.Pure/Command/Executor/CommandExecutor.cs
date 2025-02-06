@@ -4,9 +4,10 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
-using Sekiban.Pure.Exception;
+using Sekiban.Pure.Exceptions;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Repositories;
+using Sekiban.Pure.Validations;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 namespace Sekiban.Pure.Command.Executor;
@@ -126,8 +127,9 @@ public class CommandExecutor : ICommandExecutor
         Func<PartitionKeys, IAggregateProjector,Task<ResultBox<Aggregate>>> loader, Func<string, List<IEvent>,Task<ResultBox<List<IEvent>>>> saver) where TCommand : ICommand where TAggregatePayload : IAggregatePayload =>
         ResultBox
             .Start
+            .Conveyor(_ => command.ValidateProperties().ToList().ToResultBox()).Verify(errors => errors.Count == 0 ? ExceptionOrNone.None : new SekibanValidationErrorsException(errors))
             .Conveyor(
-                keys => CreateCommandContextWithoutState<TCommand, TAggregatePayload, TInject>(
+                _ => CreateCommandContextWithoutState<TCommand, TAggregatePayload, TInject>(
                     command,
                     partitionKeys,
                     projector,

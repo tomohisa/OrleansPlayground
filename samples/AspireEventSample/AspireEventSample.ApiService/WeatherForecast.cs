@@ -4,7 +4,7 @@ using AspireEventSample.ApiService.Aggregates.Carts;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
-using Sekiban.Pure.Exception;
+using Sekiban.Pure.Exceptions;
 using Sekiban.Pure.Extensions;
 using Sekiban.Pure.Projectors;
 

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using ResultBoxes;
-using Sekiban.Pure.Exception;
+using Sekiban.Pure.Exceptions;
 using Sekiban.Pure.Extensions;
 using Sekiban.Pure.Projectors;
 namespace Sekiban.Pure.Documents;
