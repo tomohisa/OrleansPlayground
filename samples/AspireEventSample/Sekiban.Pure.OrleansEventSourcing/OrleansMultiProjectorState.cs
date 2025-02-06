@@ -9,6 +9,8 @@ public record OrleansMultiProjectorState(
     [property: Id(2)] Guid LastEventId,
     [property: Id(3)] string LastSortableUniqueId,
     [property: Id(4)] int Version,
-    [property: Id(5)] string RootPartitionKey)
+    [property: Id(5)] int AppliedSnapshotVersion,
+    [property: Id(6)] string RootPartitionKey)
 {
+    public MultiProjectorState ToMultiProjectorState() => new(ProjectorCommon, LastEventId, LastSortableUniqueId, Version, AppliedSnapshotVersion,RootPartitionKey); 
 }

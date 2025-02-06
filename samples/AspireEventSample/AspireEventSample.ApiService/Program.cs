@@ -90,11 +90,12 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapGet("/getMultiProjection", ([FromServices]IClusterClient clusterClient) =>
+app.MapGet("/getMultiProjection",async ([FromServices]IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
 {
     var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
-    multiProjectorGrain.RebuildStateAsync();
-    return multiProjectorGrain.GetStateAsync();
+    await multiProjectorGrain.RebuildStateAsync();
+    var state = await multiProjectorGrain.GetStateAsync();
+    return multiProjectorsType.ToTypedState(state.ToMultiProjectorState());
 }).WithName("GetMultiProjection")
     .WithOpenApi();
 

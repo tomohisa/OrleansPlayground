@@ -30,6 +30,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
                 Guid.Empty,
                 string.Empty,
                 0,
+                0,
                 "default");
             await safeState.WriteStateAsync();
         }
@@ -67,6 +68,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
                 safeState.State?.Version + 1 ?? 1,
+                0,
                 safeState.State?.RootPartitionKey ?? "default");
             await safeState.WriteStateAsync();
             UnsafeState = null;
@@ -87,6 +89,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
                     lastSafeEvent.Id,
                     lastSafeEvent.SortableUniqueId,
                     safeState.State?.Version + 1 ?? 1,
+                    0,
                     safeState.State?.RootPartitionKey ?? "default");
                 await safeState.WriteStateAsync();
             }
@@ -97,6 +100,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
                 safeState.State?.Version + 1 ?? 1,
+                0,
                 safeState.State?.RootPartitionKey ?? "default");
         }
     }
@@ -134,6 +138,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
                 safeState.State.Version + 1,
+                0,
                 safeState.State.RootPartitionKey);
             await safeState.WriteStateAsync();
             UnsafeState = null;
@@ -154,6 +159,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
                     lastSafeEvent.Id,
                     lastSafeEvent.SortableUniqueId,
                     safeState.State.Version + 1,
+                    0, 
                     safeState.State.RootPartitionKey);
                 await safeState.WriteStateAsync();
             }
@@ -164,6 +170,7 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
                 safeState.State.Version + 1,
+                0,
                 safeState.State.RootPartitionKey);
         }
     }

@@ -10,4 +10,5 @@ public interface IMultiProjectorsType
         .ReduceEach(multiProjector, (ev, common) => Project(common, ev));
 
     IMultiProjectorCommon GetProjectorFromGrainName(string grainName);
+    IMultiProjectorStateCommon ToTypedState(MultiProjectorState state);
 }

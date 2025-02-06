@@ -2,13 +2,14 @@ using ResultBoxes;
 using Sekiban.Pure.Events;
 namespace Sekiban.Pure.Projectors;
 
+public interface IMultiProjectorStateCommon;
 public record MultiProjectionState<TMultiProjector>(
     TMultiProjector Payload,
     Guid LastEventId,
     string LastSortableUniqueId,
     int AppliedSnapshotVersion,
     int Version,
-    string RootPartitionKey) where TMultiProjector : IMultiProjector<TMultiProjector>
+    string RootPartitionKey) : IMultiProjectorStateCommon where TMultiProjector : IMultiProjector<TMultiProjector>
 {
     public MultiProjectionState() : this(
         TMultiProjector.GenerateInitialPayload(),
@@ -32,6 +33,6 @@ public record MultiProjectionState<TMultiProjector>(
                     Version = Version + 1
                 });
 }
-public record MultiProjectorState(IMultiProjectorCommon ProjectorCommon, Guid LastEventId, string LastSortableUniqueId, int Version, string RootPartitionKey)
+public record MultiProjectorState(IMultiProjectorCommon ProjectorCommon, Guid LastEventId, string LastSortableUniqueId, int Version, int AppliedSnapshotVersion, string RootPartitionKey)
 {
 }

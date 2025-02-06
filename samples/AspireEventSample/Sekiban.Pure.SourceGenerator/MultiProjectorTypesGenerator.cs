@@ -100,6 +100,19 @@ public class MultiProjectorTypesGenerator : IIncrementalGenerator
         sb.AppendLine("        public ResultBox<IMultiProjectorCommon> Project(IMultiProjectorCommon multiProjector, IReadOnlyList<IEvent> events) => ResultBox.FromValue(events.ToList())");
         sb.AppendLine("            .ReduceEach(multiProjector, (ev, common) => Project(common, ev));");
         sb.AppendLine();
+        sb.AppendLine("        public IMultiProjectorStateCommon ToTypedState(MultiProjectorState state)");
+        sb.AppendLine("            => state.ProjectorCommon switch");
+        sb.AppendLine("            {");
+
+        foreach (var type in multiProjectorTypes)
+        {
+            var className = type.TypeName.Split('.').Last();
+            sb.AppendLine($"                {type.TypeName} projector => new MultiProjectionState<{type.TypeName}>(projector, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
+        }
+
+        sb.AppendLine("                _ => throw new ArgumentException($\"No state type found for projector type: {state.ProjectorCommon.GetType().Name}\")");
+        sb.AppendLine("            };");
+        sb.AppendLine();
         sb.AppendLine("        public IMultiProjectorCommon GetProjectorFromGrainName(string grainName)");
         sb.AppendLine("            => grainName switch");
         sb.AppendLine("            {");
