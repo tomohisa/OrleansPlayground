@@ -4,6 +4,7 @@ using Orleans;
 using ResultBoxes;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
+using Sekiban.Pure.Query;
 
 namespace AspireEventSample.ApiService.Projections;
 
@@ -34,4 +35,10 @@ public record BranchMultiProjector([property: Id(1)] ImmutableDictionary<Guid, B
         };
 
     public static BranchMultiProjector GenerateInitialPayload() => new(ImmutableDictionary<Guid, BranchRecord>.Empty);
+}
+
+public record BranchExistsQuery(string NameContains) : IMultiProjectionQuery<BranchMultiProjector, BranchExistsQuery, bool>
+{
+
+    public static ResultBox<bool> HandleQuery(MultiProjectionState<BranchMultiProjector> projection, BranchExistsQuery query, IQueryContext context) => projection.Payload.Branches.Values.Any(b => b.BranchName.Contains(query.NameContains));
 }

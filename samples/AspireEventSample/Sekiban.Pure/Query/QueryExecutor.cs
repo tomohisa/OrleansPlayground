@@ -21,12 +21,11 @@ public class QueryExecutor
 
     public Task<ResultBox<TOutput>> ExecuteWithMultiProjectionFunction<TMultiProjector, TQuery, TOutput>(
         TQuery query,
-        Func<MultiProjectionState<TMultiProjector>, TQuery, IQueryContext, ResultBox<TOutput>> handler)
+        Func<MultiProjectionState<TMultiProjector>, TQuery, IQueryContext, ResultBox<TOutput>> handler,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader)
         where TQuery : IQueryCommon<TQuery, TOutput>, IEquatable<TQuery>
         where TOutput : notnull
         where TMultiProjector : IMultiProjector<TMultiProjector> =>
-        Repository
-            .LoadMultiProjection<TMultiProjector>(MultiProjectionEventSelector.All)
+        repositoryLoader(MultiProjectionEventSelector.All)
             .Combine(_ => new QueryContext().ToResultBox())
             .Conveyor((projection, context) => handler(projection, query, context))
             .ToTask();

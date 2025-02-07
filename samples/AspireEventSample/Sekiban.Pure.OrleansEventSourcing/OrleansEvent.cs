@@ -1,4 +1,3 @@
-using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Events;
 
 namespace Sekiban.Pure.OrleansEventSourcing;
@@ -24,18 +23,4 @@ public record OrleansEvent(
             OrleansEventMetadata.FromEventMetadata(ev.Metadata)); 
     }
 
-}
-[GenerateSerializer]
-public record OrleansEventMetadata([property:Id(0)]string CausationId,
-    [property:Id(1)]string CorrelationId, [property:Id(2)]string ExecutedUser)
-{
-    public static OrleansEventMetadata FromEventMetadata(EventMetadata metadata) => new(metadata.CausationId, metadata.CorrelationId, metadata.ExecutedUser);
-    public EventMetadata ToEventMetadata() => new(CausationId, CorrelationId, ExecutedUser);
-}
-[GenerateSerializer]
-public record OrleansCommandMetadata([property:Id(0)]Guid CommandId, [property:Id(1)]string CausationId,
-    [property:Id(2)]string CorrelationId, [property:Id(3)]string ExecutedUser)
-{
-    public static OrleansCommandMetadata FromCommandMetadata(CommandMetadata metadata) => new(metadata.CommandId, metadata.CausationId, metadata.CorrelationId, metadata.ExecutedUser);
-    public CommandMetadata ToCommandMetadata() => new(CommandId, CausationId, CorrelationId, ExecutedUser);
 }
