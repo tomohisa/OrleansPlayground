@@ -128,6 +128,18 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
                     sb.AppendLine();
                     break;
             }
+
+            // Add ExecuteAsQueryResult overload
+            if (type.InterfaceName == "IMultiProjectionQuery" && type.TypeCount == 3)
+            {
+                sb.AppendLine(
+                    $"        public static Task<ResultBox<IQueryResult>> ExecuteAsQueryResult(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> repositoryLoader) =>");
+                sb.AppendLine(
+                    $"            queryExecutor.ExecuteWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
+                sb.AppendLine("                query,");
+                sb.AppendLine($"                {type.Generic2Name}.HandleQuery, repositoryLoader).Remap(value => new QueryResult<{type.Generic3Name}>(value)).Remap(valueResult => (IQueryResult)valueResult);");
+                sb.AppendLine();
+            }
         }
 
         sb.AppendLine("    }");
@@ -146,4 +158,3 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
         public string Generic3Name { get; set; } = string.Empty;
     }
 }
-
