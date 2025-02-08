@@ -10,11 +10,10 @@ public class QueryExecutor
         ExecuteListWithMultiProjectionFunction<TMultiProjector, TQuery, TOutput>(
             TQuery query,
             Func<MultiProjectionState<TMultiProjector>, TQuery, IQueryContext, ResultBox<IEnumerable<TOutput>>> filter,
-            Func<IEnumerable<TOutput>, TQuery, IQueryContext, ResultBox<IEnumerable<TOutput>>> sort)
+            Func<IEnumerable<TOutput>, TQuery, IQueryContext, ResultBox<IEnumerable<TOutput>>> sort,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader)
         where TQuery : IListQueryCommon<TQuery, TOutput>, IEquatable<TQuery>
         where TOutput : notnull
-        where TMultiProjector : IMultiProjector<TMultiProjector> => Repository
-        .LoadMultiProjection<TMultiProjector>(MultiProjectionEventSelector.All)
+        where TMultiProjector : IMultiProjector<TMultiProjector> => repositoryLoader(MultiProjectionEventSelector.All)
         .Combine(_ => new QueryContext().ToResultBox())
         .Combine((projection, context) => filter(projection, query, context))
         .Conveyor((_, context, filtered) => SortAndReturnQuery(query, sort, filtered, context));

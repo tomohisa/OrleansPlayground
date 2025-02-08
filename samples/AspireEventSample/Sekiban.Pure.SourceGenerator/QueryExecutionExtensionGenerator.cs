@@ -110,21 +110,21 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
             {
                 case ("IMultiProjectionListQuery", 3):
                     sb.AppendLine(
-                        $"        public static Task<ResultBox<ListQueryResult<{type.Generic3Name}>>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query) =>");
+                        $"        public static Task<ResultBox<ListQueryResult<{type.Generic3Name}>>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query, Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> repositoryLoader) =>");
                     sb.AppendLine(
                         $"      queryExecutor.ExecuteListWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
                     sb.AppendLine("                query,");
                     sb.AppendLine($"                {type.Generic2Name}.HandleFilter,");
-                    sb.AppendLine($"                {type.Generic2Name}.HandleSort);");
+                    sb.AppendLine($"                {type.Generic2Name}.HandleSort, repositoryLoader);");
                     sb.AppendLine();
                     break;
                 case ("IMultiProjectionQuery", 3):
                     sb.AppendLine(
-                        $"        public static Task<ResultBox<{type.Generic3Name}>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query) =>");
+                        $"        public static Task<ResultBox<{type.Generic3Name}>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> repositoryLoader) =>");
                     sb.AppendLine(
                         $"      queryExecutor.ExecuteWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
                     sb.AppendLine("                query,");
-                    sb.AppendLine($"                {type.Generic2Name}.HandleQuery);");
+                    sb.AppendLine($"                {type.Generic2Name}.HandleQuery, repositoryLoader);");
                     sb.AppendLine();
                     break;
             }
