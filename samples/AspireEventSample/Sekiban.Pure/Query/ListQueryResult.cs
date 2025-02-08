@@ -16,7 +16,7 @@ public record ListQueryResult<T>(
     int? TotalPages,
     int? CurrentPage,
     int? PageSize,
-    IEnumerable<T> Items)
+    IEnumerable<T> Items) : IListQueryResult
 {
     public static ListQueryResult<T> Empty => new(0, 0, 0, 0, Array.Empty<T>());
 

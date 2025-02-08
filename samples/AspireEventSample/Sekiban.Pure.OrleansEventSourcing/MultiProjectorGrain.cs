@@ -4,6 +4,7 @@ using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 using System.Linq;
 using Orleans.Runtime;
+using Sekiban.Pure.Query;
 
 namespace Sekiban.Pure.OrleansEventSourcing;
 
@@ -167,5 +168,10 @@ public class MultiProjectorGrain(IMultiProjectorsType multiProjectorsType, [Pers
     {
         await BuildStateAsync();
         return UnsafeState ?? safeState.State;
+    }
+    public Task<IOrleansQueryResult> QueryAsync(IQueryCommon query)
+    {
+        throw new NotImplementedException();
+
     }
 }
