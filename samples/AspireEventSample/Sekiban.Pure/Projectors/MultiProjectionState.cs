@@ -1,5 +1,7 @@
 using ResultBoxes;
 using Sekiban.Pure.Events;
+using Sekiban.Pure.Exceptions;
+
 namespace Sekiban.Pure.Projectors;
 
 public record MultiProjectionState<TMultiProjector>(
@@ -19,9 +21,24 @@ public record MultiProjectionState<TMultiProjector>(
         string.Empty)
     {
     }
-    public string GetPayloadVersionIdentifier() => Payload.GetVersion();
-    public ResultBox<MultiProjectionState<TMultiProjector>> ApplyEvent(IEvent ev) =>
-        Payload
+
+    public static ResultBox<MultiProjectionState<TMultiProjector>> FromCommon(IMultiProjectorStateCommon common)
+    {
+        return common switch
+        {
+            MultiProjectionState<TMultiProjector> state => state,
+            _ => new SekibanQueryTypeException("Unexpected common type")
+        };
+    }
+
+    public string GetPayloadVersionIdentifier()
+    {
+        return Payload.GetVersion();
+    }
+
+    public ResultBox<MultiProjectionState<TMultiProjector>> ApplyEvent(IEvent ev)
+    {
+        return Payload
             .Project(Payload, ev)
             .Remap(
                 p => this with
@@ -31,4 +48,5 @@ public record MultiProjectionState<TMultiProjector>(
                     LastSortableUniqueId = ev.SortableUniqueId,
                     Version = Version + 1
                 });
+    }
 }
