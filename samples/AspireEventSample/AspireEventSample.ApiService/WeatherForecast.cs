@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AspireEventSample.ApiService.Aggregates.Carts;
+using AspireEventSample.ApiService.Projections;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
@@ -29,7 +30,7 @@ public partial class AspireEventSampleApiServiceEventsJsonContext : JsonSerializ
 {
 }
 
-public static class QueryExecutorExtensions
+public static class QueryExecutorExtensions2
 {
     public static Task<ResultBox<bool>> Execute(this QueryExecutor queryExecutor, AspireEventSample.ApiService.Projections.BranchExistsQuery query,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<AspireEventSample.ApiService.Projections.BranchMultiProjector>>> repositoryLoader) =>
         queryExecutor.ExecuteWithMultiProjectionFunction<AspireEventSample.ApiService.Projections.BranchMultiProjector,AspireEventSample.ApiService.Projections.BranchExistsQuery,bool>(
@@ -47,6 +48,35 @@ public static class QueryExecutorExtensions
             AspireEventSample.ApiService.Projections.SimpleBranchListQuery.HandleFilter,
             AspireEventSample.ApiService.Projections.SimpleBranchListQuery.HandleSort, repositoryLoader);
 
+    public static Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult(this QueryExecutor queryExecutor, AspireEventSample.ApiService.Projections.SimpleBranchListQuery query, Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<AspireEventSample.ApiService.Projections.BranchMultiProjector>>> repositoryLoader) =>
+        queryExecutor.ExecuteListWithMultiProjectionFunction<AspireEventSample.ApiService.Projections.BranchMultiProjector,AspireEventSample.ApiService.Projections.SimpleBranchListQuery,AspireEventSample.ApiService.Projections.BranchMultiProjector.BranchRecord>(
+            query,
+            AspireEventSample.ApiService.Projections.SimpleBranchListQuery.HandleFilter,
+            AspireEventSample.ApiService.Projections.SimpleBranchListQuery.HandleSort, repositoryLoader).Remap(IListQueryResult (rs) => rs);
     
 
+}
+
+public class AspireEventSampleApiServiceQueryTypes : IQueryTypes
+{
+    public Task<ResultBox<IQueryResult>> ExecuteAsQueryResult<TMultiProjector>(IQueryCommon query,
+        Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader)
+        where TMultiProjector : IMultiProjector<TMultiProjector>
+        => (query, repositoryLoader) switch
+        {
+            (AspireEventSample.ApiService.Projections.BranchExistsQuery branchExistsQuery, Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<BranchMultiProjector>>> branchLoader) => new QueryExecutor()
+                .ExecuteAsQueryResult(branchExistsQuery, branchLoader),
+            _ => throw new NotImplementedException()
+        };
+
+    public Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult<TMultiProjector>(IListQueryCommon query,
+        Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader)
+        where TMultiProjector : IMultiProjector<TMultiProjector>
+        => (query, repositoryLoader) switch
+        {
+            (AspireEventSample.ApiService.Projections.SimpleBranchListQuery simpleBranchListQuery,
+                Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<BranchMultiProjector>>> branchLoader)
+                => (new QueryExecutor()).ExecuteAsQueryResult(simpleBranchListQuery, branchLoader),
+            _ => throw new NotImplementedException()
+        };
 }
