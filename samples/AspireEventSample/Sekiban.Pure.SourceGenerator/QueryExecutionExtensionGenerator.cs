@@ -1,10 +1,11 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
+
 namespace Sekiban.Pure.SourceGenerator;
 
 [Generator]
@@ -38,7 +39,7 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
                 var rootNamespace = compilation.AssemblyName ?? throw new Exception();
                 var queryTypesSourceCode = GenerateQueryTypesSourceCode(commandTypes.ToImmutable(), rootNamespace);
                 var extensionsSourceCode = GenerateSourceCode(commandTypes.ToImmutable(), rootNamespace);
-                
+
                 ctx.AddSource("QueryTypes.g.cs", SourceText.From(queryTypesSourceCode, Encoding.UTF8));
                 ctx.AddSource("QueryExecutorExtension.g.cs", SourceText.From(extensionsSourceCode, Encoding.UTF8));
             });
@@ -53,56 +54,63 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
         sb.AppendLine("using Sekiban.Pure.Query;");
         sb.AppendLine("using Sekiban.Pure.Projectors;");
         sb.AppendLine("using Sekiban.Pure.Exceptions;");
-        
+
         sb.AppendLine();
         sb.AppendLine($"namespace {rootNamespace}.Generated");
         sb.AppendLine("{");
         sb.AppendLine($"    public class {rootNamespace.Replace(".", "")}QueryTypes : IQueryTypes");
         sb.AppendLine("    {");
-        
+
         // Implement ExecuteAsQueryResult for IQueryCommon
-        sb.AppendLine("        public Task<ResultBox<IQueryResult>> ExecuteAsQueryResult<TMultiProjector>(");
+        sb.AppendLine("        public Task<ResultBox<IQueryResult>> ExecuteAsQueryResult(");
         sb.AppendLine("            IQueryCommon query,");
-        sb.AppendLine("            Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader)");
-        sb.AppendLine("            where TMultiProjector : IMultiProjector<TMultiProjector>");
+        sb.AppendLine(
+            "            Func<IMultiProjectionEventSelector, Task<ResultBox<IMultiProjectorStateCommon>>> repositoryLoader)");
         sb.AppendLine("        => (query, repositoryLoader) switch");
         sb.AppendLine("        {");
-        
+
         foreach (var type in queryTypes.Where(t => t.InterfaceName == "IMultiProjectionQuery"))
         {
-            sb.AppendLine($"            ({type.RecordName} q, Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> loader) =>");
-            sb.AppendLine($"                new QueryExecutor().ExecuteAsQueryResult(q, loader),");
+            sb.AppendLine(
+                $"            ({type.RecordName} q, Func<IMultiProjectionEventSelector, Task<ResultBox<IMultiProjectorStateCommon>>> loader) =>");
+            sb.AppendLine("                new QueryExecutor().ExecuteAsQueryResult(q, selector => loader(selector)");
+            sb.AppendLine($"                        .Conveyor(MultiProjectionState<{type.Generic1Name}>.FromCommon)),");
         }
-        
+
         sb.AppendLine("            _ => Task.FromResult(ResultBox<IQueryResult>.FromException(");
-        sb.AppendLine("                new SekibanQueryTypeException($\"Unknown query type {query.GetType().Name} with {typeof(TMultiProjector).Name}\")))");
+        sb.AppendLine(
+            "                new SekibanQueryTypeException($\"Unknown query type {query.GetType().Name}\")))");
         sb.AppendLine("        };");
-        
+
         sb.AppendLine();
-        
+
         // Implement ExecuteAsQueryResult for IListQueryCommon
-        sb.AppendLine("        public Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult<TMultiProjector>(");
+        sb.AppendLine("        public Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult(");
         sb.AppendLine("            IListQueryCommon query,");
-        sb.AppendLine("            Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader)");
-        sb.AppendLine("            where TMultiProjector : IMultiProjector<TMultiProjector>");
+        sb.AppendLine(
+            "            Func<IMultiProjectionEventSelector, Task<ResultBox<IMultiProjectorStateCommon>>> repositoryLoader)");
         sb.AppendLine("        => (query, repositoryLoader) switch");
         sb.AppendLine("        {");
-        
+
         foreach (var type in queryTypes.Where(t => t.InterfaceName == "IMultiProjectionListQuery"))
         {
-            sb.AppendLine($"            ({type.RecordName} q, Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> loader) =>");
-            sb.AppendLine($"                new QueryExecutor().ExecuteAsQueryResult(q, loader),");
+            sb.AppendLine(
+                $"            ({type.RecordName} q, Func<IMultiProjectionEventSelector, Task<ResultBox<IMultiProjectorStateCommon>>> loader) =>");
+            sb.AppendLine("                new QueryExecutor().ExecuteAsQueryResult(q, selector => loader(selector)");
+            sb.AppendLine($"                        .Conveyor(MultiProjectionState<{type.Generic1Name}>.FromCommon)),");
         }
-        
+
         sb.AppendLine("            _ => Task.FromResult(ResultBox<IListQueryResult>.FromException(");
-        sb.AppendLine("                new SekibanQueryTypeException($\"Unknown query type {query.GetType().Name} with {typeof(TMultiProjector).Name}\")))");
+        sb.AppendLine(
+            "                new SekibanQueryTypeException($\"Unknown query type {query.GetType().Name} \")))");
         sb.AppendLine("        };");
-        
+
         sb.AppendLine("    }");
         sb.AppendLine("}");
 
         return sb.ToString();
     }
+
     public ImmutableArray<QueryWithHandlerValues> GetCommandWithHandlerValues(
         Compilation compilation,
         ImmutableArray<SyntaxNode> types)
@@ -120,12 +128,11 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
             var typeSymbol = model.GetDeclaredSymbol(typeSyntax) as INamedTypeSymbol ?? throw new Exception();
             var allInterfaces = typeSymbol.AllInterfaces.ToList();
             var matchingInterface = typeSymbol.AllInterfaces.FirstOrDefault(
-                m => m.OriginalDefinition is not null && 
-                     (m.OriginalDefinition.Name == iListQueryWithHandlerSymbol?.Name || 
+                m => m.OriginalDefinition is not null &&
+                     (m.OriginalDefinition.Name == iListQueryWithHandlerSymbol?.Name ||
                       m.OriginalDefinition.Name == iQueryWithHandlerSymbol?.Name));
-            
+
             if (matchingInterface != null)
-            {
                 eventTypes.Add(
                     new QueryWithHandlerValues
                     {
@@ -138,8 +145,8 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
                             ? matchingInterface.TypeArguments[2].ToDisplayString()
                             : string.Empty
                     });
-            }
         }
+
         return eventTypes.ToImmutable();
     }
 
@@ -172,7 +179,7 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
             {
                 case ("IMultiProjectionListQuery", 3):
                     sb.AppendLine(
-                        $"        public static Task<ResultBox<ListQueryResult<{type.Generic3Name}>>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query, Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> repositoryLoader) =>");
+                        $"        public static Task<ResultBox<ListQueryResult<{type.Generic3Name}>>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query, Func<IMultiProjectionEventSelector, Task<ResultBox<MultiProjectionState<{type.Generic1Name}>>>> repositoryLoader) =>");
                     sb.AppendLine(
                         $"      queryExecutor.ExecuteListWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
                     sb.AppendLine("                query,");
@@ -182,7 +189,7 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
                     break;
                 case ("IMultiProjectionQuery", 3):
                     sb.AppendLine(
-                        $"        public static Task<ResultBox<{type.Generic3Name}>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> repositoryLoader) =>");
+                        $"        public static Task<ResultBox<{type.Generic3Name}>> Execute(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, Task<ResultBox<MultiProjectionState<{type.Generic1Name}>>>> repositoryLoader) =>");
                     sb.AppendLine(
                         $"      queryExecutor.ExecuteWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
                     sb.AppendLine("                query,");
@@ -195,24 +202,26 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
             if (type.InterfaceName == "IMultiProjectionQuery" && type.TypeCount == 3)
             {
                 sb.AppendLine(
-                    $"        public static Task<ResultBox<IQueryResult>> ExecuteAsQueryResult(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> repositoryLoader) =>");
+                    $"        public static Task<ResultBox<IQueryResult>> ExecuteAsQueryResult(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, Task<ResultBox<MultiProjectionState<{type.Generic1Name}>>>> repositoryLoader) =>");
                 sb.AppendLine(
                     $"            queryExecutor.ExecuteWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
                 sb.AppendLine("                query,");
-                sb.AppendLine($"                {type.Generic2Name}.HandleQuery, repositoryLoader).Remap(value => new QueryResult<{type.Generic3Name}>(value)).Remap(valueResult => (IQueryResult)valueResult);");
+                sb.AppendLine(
+                    $"                {type.Generic2Name}.HandleQuery, repositoryLoader).Remap(value => new QueryResult<{type.Generic3Name}>(value)).Remap(valueResult => (IQueryResult)valueResult);");
                 sb.AppendLine();
             }
-            
+
             // Add ExecuteAsQueryResult overload for list query
             if (type.InterfaceName == "IMultiProjectionListQuery" && type.TypeCount == 3)
             {
                 sb.AppendLine(
-                    $"        public static Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, ResultBox<MultiProjectionState<{type.Generic1Name}>>> repositoryLoader) =>");
+                    $"        public static Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult(this QueryExecutor queryExecutor, {type.RecordName} query,  Func<IMultiProjectionEventSelector, Task<ResultBox<MultiProjectionState<{type.Generic1Name}>>>> repositoryLoader) =>");
                 sb.AppendLine(
-                        $"            queryExecutor.ExecuteListWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
+                    $"            queryExecutor.ExecuteListWithMultiProjectionFunction<{type.Generic1Name},{type.Generic2Name},{type.Generic3Name}>(");
                 sb.AppendLine("                query,");
                 sb.AppendLine($"                {type.Generic2Name}.HandleFilter,");
-                sb.AppendLine($"                {type.Generic2Name}.HandleSort, repositoryLoader).Remap(rs => (IListQueryResult)rs);");
+                sb.AppendLine(
+                    $"                {type.Generic2Name}.HandleSort, repositoryLoader).Remap(rs => (IListQueryResult)rs);");
                 sb.AppendLine();
             }
         }
@@ -222,6 +231,7 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
 
         return sb.ToString();
     }
+
     public class QueryWithHandlerValues
     {
         public string InterfaceName { get; set; } = string.Empty;
