@@ -1,3 +1,4 @@
+using ResultBoxes;
 using Sekiban.Pure.Exceptions;
 
 namespace Sekiban.Pure.Query;
@@ -35,6 +36,16 @@ public record ListQueryResult<T>(
     {
         return new ListQueryResultGeneral(TotalCount, TotalPages, CurrentPage, PageSize, Items.Cast<object>(),
             typeof(T).Name, query);
+    }
+
+    public static ResultBox<ListQueryResult<T>> FromGeneral(ListQueryResultGeneral general)
+    {
+        return ResultBox.WrapTry(() => new ListQueryResult<T>(
+            general.TotalCount,
+            general.TotalPages,
+            general.CurrentPage,
+            general.PageSize,
+            general.Items.Cast<T>()));
     }
 
     internal static ListQueryResult<T> MakeQueryListResult(

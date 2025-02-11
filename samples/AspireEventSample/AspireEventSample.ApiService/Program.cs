@@ -186,7 +186,7 @@ apiRoute.MapGet("/searchBranches", async ([FromQuery] string nameContains, [From
     {
         var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
         var result = await multiProjectorGrain.QueryAsync(new SimpleBranchListQuery(nameContains));
-        return result.ToListQueryResultGeneral();
+        return queryTypes.ToTypedListQueryResult(result.ToListQueryResultGeneral()).UnwrapBox();
     }).WithName("SearchBranches")
     .WithOpenApi();
 
