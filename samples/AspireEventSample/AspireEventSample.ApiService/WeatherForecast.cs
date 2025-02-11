@@ -24,7 +24,7 @@ internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary
 public partial class AspireEventSampleApiServiceEventsJsonContext : JsonSerializerContext
 {
 }
-//
+
 // public class AspireEventSampleApiServiceQueryTypes : IQueryTypes
 // {
 //     public Task<ResultBox<IQueryResult>> ExecuteAsQueryResult(
@@ -33,11 +33,10 @@ public partial class AspireEventSampleApiServiceEventsJsonContext : JsonSerializ
 //     {
 //         return (query, repositoryLoader) switch
 //         {
-//             (BranchExistsQuery q,
-//                 Func<IMultiProjectionEventSelector, Task<ResultBox<IMultiProjectorStateCommon>>> loader) =>
+//             (BranchExistsQuery q, Func<IMultiProjectionEventSelector, Task<ResultBox<IMultiProjectorStateCommon>>>
+//                 loader) =>
 //                 new QueryExecutor().ExecuteAsQueryResult(q, selector => loader(selector)
-//                     .Conveyor(MultiProjectionState<BranchMultiProjector>
-//                         .FromCommon)),
+//                     .Conveyor(MultiProjectionState<BranchMultiProjector>.FromCommon)),
 //             _ => Task.FromResult(ResultBox<IQueryResult>.FromException(
 //                 new SekibanQueryTypeException($"Unknown query type {query.GetType().Name}")))
 //         };
@@ -52,8 +51,7 @@ public partial class AspireEventSampleApiServiceEventsJsonContext : JsonSerializ
 //             (SimpleBranchListQuery q,
 //                 Func<IMultiProjectionEventSelector, Task<ResultBox<IMultiProjectorStateCommon>>> loader) =>
 //                 new QueryExecutor().ExecuteAsQueryResult(q, selector => loader(selector)
-//                     .Conveyor(MultiProjectionState<BranchMultiProjector>
-//                         .FromCommon)),
+//                     .Conveyor(MultiProjectionState<BranchMultiProjector>.FromCommon)),
 //             _ => Task.FromResult(ResultBox<IListQueryResult>.FromException(
 //                 new SekibanQueryTypeException($"Unknown query type {query.GetType().Name} ")))
 //         };
@@ -65,6 +63,16 @@ public partial class AspireEventSampleApiServiceEventsJsonContext : JsonSerializ
 //         {
 //             BranchExistsQuery => new QueryResult<bool>((bool)general.Value),
 //             _ => throw new SekibanQueryTypeException($"Unknown query type {general.Query.GetType().Name}")
+//         };
+//     }
+//
+//     public ResultBox<IListQueryResult> ToTypedListQueryResult(ListQueryResultGeneral general)
+//     {
+//         return general.Query switch
+//         {
+//             SimpleBranchListQuery => ListQueryResult<BranchMultiProjector.BranchRecord>.FromGeneral(general)
+//                 .ConveyorWrapTry(a => a as IListQueryResult),
+//             _ => new SekibanQueryTypeException($"Unknown query type {general.Query.GetType().Name}")
 //         };
 //     }
 // }
