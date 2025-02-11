@@ -55,7 +55,8 @@ public record BranchExistsQuery([property: Id(0)] string NameContains)
     }
 }
 
-public record SimpleBranchListQuery(string NameContain)
+[GenerateSerializer]
+public record SimpleBranchListQuery([property: Id(0)] string NameContain)
     : IMultiProjectionListQuery<BranchMultiProjector, SimpleBranchListQuery, BranchMultiProjector.BranchRecord>
 {
     public static ResultBox<IEnumerable<BranchMultiProjector.BranchRecord>> HandleFilter(

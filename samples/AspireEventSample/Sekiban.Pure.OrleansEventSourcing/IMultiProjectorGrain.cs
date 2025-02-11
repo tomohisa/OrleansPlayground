@@ -8,4 +8,5 @@ public interface IMultiProjectorGrain : IGrainWithStringKey
     Task BuildStateAsync();
     Task<OrleansMultiProjectorState> GetStateAsync();
     Task<OrleansQueryResultGeneral> QueryAsync(IQueryCommon query);
+    Task<OrleansListQueryResultGeneral> QueryAsync(IListQueryCommon query);
 }

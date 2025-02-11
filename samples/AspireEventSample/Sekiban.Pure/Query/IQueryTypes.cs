@@ -16,4 +16,5 @@ public interface IQueryTypes
             Task<ResultBox<IMultiProjectorStateCommon>>> repositoryLoader);
 
     public ResultBox<IQueryResult> ToTypedQueryResult(QueryResultGeneral general);
+    public ResultBox<IListQueryResult> ToTypedListQueryResult(ListQueryResultGeneral general);
 }

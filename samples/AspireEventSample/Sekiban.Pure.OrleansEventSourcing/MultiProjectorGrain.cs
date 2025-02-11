@@ -162,6 +162,14 @@ public class MultiProjectorGrain(
             .UnwrapBox();
     }
 
+    public async Task<OrleansListQueryResultGeneral> QueryAsync(IListQueryCommon query)
+    {
+        var result = await queryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery) ??
+                     throw new ApplicationException("Query not found");
+        return result.Remap(value => value.ToGeneral(query))
+            .Remap(OrleansListQueryResultGeneral.FromListQueryResultGeneral).UnwrapBox();
+    }
+
     public async Task<ResultBox<IMultiProjectorStateCommon>> GetProjectorForQuery(
         IMultiProjectionEventSelector multiProjectionEventSelector)
     {

@@ -12,16 +12,3 @@ public record QueryResult<T>(T Value) : IQueryResult
         return new QueryResultGeneral(Value, typeof(T).Name, query);
     }
 }
-
-public record QueryResultGeneral(object Value, string ResultType, IQueryCommon Query) : IQueryResult
-{
-    public object GetValue()
-    {
-        return Value;
-    }
-
-    public QueryResultGeneral ToGeneral(IQueryCommon queryCommon)
-    {
-        return this with { Query = queryCommon };
-    }
-}

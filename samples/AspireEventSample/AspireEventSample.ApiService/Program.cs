@@ -181,5 +181,13 @@ apiRoute.MapGet("/branchExists/{nameContains}",
         }).WithName("BranchExists")
     .WithOpenApi();
 
+apiRoute.MapGet("/searchBranches", async ([FromQuery] string nameContains, [FromServices] IClusterClient clusterClient,
+        [FromServices] IQueryTypes queryTypes) =>
+    {
+        var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
+        var result = await multiProjectorGrain.QueryAsync(new SimpleBranchListQuery(nameContains));
+        return result.ToListQueryResultGeneral();
+    }).WithName("SearchBranches")
+    .WithOpenApi();
 
 app.Run();

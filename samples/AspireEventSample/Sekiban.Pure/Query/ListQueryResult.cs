@@ -1,4 +1,5 @@
 using Sekiban.Pure.Exceptions;
+
 namespace Sekiban.Pure.Query;
 
 /// <summary>
@@ -20,21 +21,27 @@ public record ListQueryResult<T>(
 {
     public static ListQueryResult<T> Empty => new(0, 0, 0, 0, Array.Empty<T>());
 
-    public virtual bool Equals(ListQueryResult<T>? other) =>
-        other != null &&
-        TotalCount == other.TotalCount &&
-        TotalPages == other.TotalPages &&
-        CurrentPage == other.CurrentPage &&
-        PageSize == other.PageSize &&
-        Items.SequenceEqual(other.Items);
+    public virtual bool Equals(ListQueryResult<T>? other)
+    {
+        return other != null &&
+               TotalCount == other.TotalCount &&
+               TotalPages == other.TotalPages &&
+               CurrentPage == other.CurrentPage &&
+               PageSize == other.PageSize &&
+               Items.SequenceEqual(other.Items);
+    }
+
+    public ListQueryResultGeneral ToGeneral(IListQueryCommon query)
+    {
+        return new ListQueryResultGeneral(TotalCount, TotalPages, CurrentPage, PageSize, Items.Cast<object>(),
+            typeof(T).Name, query);
+    }
+
     internal static ListQueryResult<T> MakeQueryListResult(
         IQueryPagingParameterCommon pagingParam,
         List<T> queryResponses)
     {
-        if (pagingParam.PageNumber == null || pagingParam.PageSize == null)
-        {
-            throw new SekibanQueryPagingError();
-        }
+        if (pagingParam.PageNumber == null || pagingParam.PageSize == null) throw new SekibanQueryPagingError();
         var pageNumber = pagingParam.PageNumber.Value;
         var pageSize = pagingParam.PageSize.Value;
         var total = queryResponses.ToList().Count;
@@ -54,10 +61,10 @@ public record ListQueryResult<T>(
         unchecked
         {
             var hashCode = TotalCount.GetHashCode();
-            hashCode = hashCode * 397 ^ TotalPages.GetHashCode();
-            hashCode = hashCode * 397 ^ CurrentPage.GetHashCode();
-            hashCode = hashCode * 397 ^ PageSize.GetHashCode();
-            hashCode = hashCode * 397 ^ Items.GetHashCode();
+            hashCode = (hashCode * 397) ^ TotalPages.GetHashCode();
+            hashCode = (hashCode * 397) ^ CurrentPage.GetHashCode();
+            hashCode = (hashCode * 397) ^ PageSize.GetHashCode();
+            hashCode = (hashCode * 397) ^ Items.GetHashCode();
             return hashCode;
         }
     }
