@@ -26,6 +26,13 @@ public record MultiProjectionState<TMultiProjector>(
     {
         return common switch
         {
+            MultiProjectionState general when general.ProjectorCommon is TMultiProjector projector => new MultiProjectionState<TMultiProjector>(
+                projector,
+                general.LastEventId,
+                general.LastSortableUniqueId,
+                general.AppliedSnapshotVersion,
+                general.Version,
+                general.RootPartitionKey),
             MultiProjectionState<TMultiProjector> state => state,
             _ => new SekibanQueryTypeException("Unexpected common type")
         };
@@ -49,4 +56,14 @@ public record MultiProjectionState<TMultiProjector>(
                     Version = Version + 1
                 });
     }
+}
+
+public record MultiProjectionState(
+    IMultiProjectorCommon ProjectorCommon,
+    Guid LastEventId,
+    string LastSortableUniqueId,
+    int Version,
+    int AppliedSnapshotVersion,
+    string RootPartitionKey) : IMultiProjectorStateCommon
+{
 }

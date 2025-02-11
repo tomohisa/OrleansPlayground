@@ -156,14 +156,19 @@ public class MultiProjectorGrain(
 
     public async Task<IOrleansQueryResult> QueryAsync(IQueryCommon query)
     {
-        var result = await queryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery);
-        throw new NotImplementedException();
+        var result = await queryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery) ??
+                     throw new ApplicationException("Query not found");
+        return result.Remap(value => value.ToGeneral(query)).Remap(OrleansQueryResultGeneral.FromQueryResultGeneral)
+            .UnwrapBox();
     }
 
-    public Task<ResultBox<IMultiProjectorStateCommon>> GetProjectorForQuery(
+    public async Task<ResultBox<IMultiProjectorStateCommon>> GetProjectorForQuery(
         IMultiProjectionEventSelector multiProjectionEventSelector)
     {
-        throw new NotImplementedException();
+        await BuildStateAsync();
+        return UnsafeState?.ToMultiProjectorState().ToResultBox<IMultiProjectorStateCommon>() ??
+               safeState?.State.ToMultiProjectorState().ToResultBox<IMultiProjectorStateCommon>() ??
+               new ApplicationException("No state found");
     }
 
 
