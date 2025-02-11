@@ -154,7 +154,7 @@ public class MultiProjectorGrain(
         return UnsafeState ?? safeState.State;
     }
 
-    public async Task<IOrleansQueryResult> QueryAsync(IQueryCommon query)
+    public async Task<OrleansQueryResultGeneral> QueryAsync(IQueryCommon query)
     {
         var result = await queryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery) ??
                      throw new ApplicationException("Query not found");

@@ -105,6 +105,18 @@ public class QueryExecutionExtensionGenerator : IIncrementalGenerator
             "                new SekibanQueryTypeException($\"Unknown query type {query.GetType().Name} \")))");
         sb.AppendLine("        };");
 
+        // Add ToTypedQueryResult method
+        sb.AppendLine();
+        sb.AppendLine("        public ResultBox<IQueryResult> ToTypedQueryResult(QueryResultGeneral general)");
+        sb.AppendLine("            => general.Query switch");
+        sb.AppendLine("            {");
+        foreach (var type in queryTypes.Where(t => t.InterfaceName == "IMultiProjectionQuery"))
+            sb.AppendLine(
+                $"                {type.RecordName} => new QueryResult<{type.Generic3Name}>(({type.Generic3Name})general.Value),");
+        sb.AppendLine(
+            "                _ => throw new SekibanQueryTypeException($\"Unknown query type {general.Query.GetType().Name}\")");
+        sb.AppendLine("            };");
+
         sb.AppendLine("    }");
         sb.AppendLine("}");
 

@@ -172,10 +172,12 @@ apiRoute.MapGet("/branch/{branchId}/reload", async ([FromRoute] Guid branchId,
     .WithOpenApi();
 
 apiRoute.MapGet("/branchExists/{nameContains}",
-        async ([FromRoute] string nameContains, [FromServices] IClusterClient clusterClient) =>
+        async ([FromRoute] string nameContains, [FromServices] IClusterClient clusterClient,
+            [FromServices] IQueryTypes queryTypes) =>
         {
             var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
-            return await multiProjectorGrain.QueryAsync(new BranchExistsQuery(nameContains));
+            var result = await multiProjectorGrain.QueryAsync(new BranchExistsQuery(nameContains));
+            return queryTypes.ToTypedQueryResult(result.ToQueryResultGeneral()).UnwrapBox();
         }).WithName("BranchExists")
     .WithOpenApi();
 
