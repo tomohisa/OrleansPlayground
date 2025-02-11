@@ -13,4 +13,9 @@ public record OrleansQueryResultGeneral(
         return new OrleansQueryResultGeneral(queryResultGeneral.Value, queryResultGeneral.ResultType,
             queryResultGeneral.Query);
     }
+
+    public QueryResultGeneral ToQueryResultGeneral()
+    {
+        return new QueryResultGeneral(Value, ResultType, Query);
+    }
 }
