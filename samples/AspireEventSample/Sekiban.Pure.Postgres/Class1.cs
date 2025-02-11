@@ -1,35 +1,24 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ResultBoxes;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Serialize;
-
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace Sekiban.Pure.Postgres;
 
 public class Class1
 {
 }
-
 public class PostgresDbFactory(
     SekibanPostgresDbOption dbOption,
     IPostgresMemoryCacheAccessor memoryCache,
     IServiceProvider serviceProvider)
 {
-    private static string GetMemoryCacheDbContextKey()
-    {
-        return "dbContext.Postgres";
-    }
+    private static string GetMemoryCacheDbContextKey() => "dbContext.Postgres";
 
-    private string GetConnectionString()
-    {
-        return dbOption.ConnectionString ?? string.Empty;
-    }
+    private string GetConnectionString() => dbOption.ConnectionString ?? string.Empty;
 
-    private bool GetMigrationFinished()
-    {
-        return dbOption.MigrationFinished;
-    }
+    private bool GetMigrationFinished() => dbOption.MigrationFinished;
 
     private void SetMigrationFinished()
     {
@@ -112,7 +101,6 @@ public class PostgresDbFactory(
         }
     }
 }
-
 public class SekibanDbContext(DbContextOptions<SekibanDbContext> options) : DbContext(options)
 {
     public DbSet<DbEvent> Events { get; set; } = default!;
@@ -123,7 +111,6 @@ public class SekibanDbContext(DbContextOptions<SekibanDbContext> options) : DbCo
         optionsBuilder.UseNpgsql(ConnectionString);
     }
 }
-
 public interface IDbEvent
 {
     public Guid Id { get; init; }
@@ -138,20 +125,16 @@ public interface IDbEvent
     public string AggregateType { get; init; }
     public string RootPartitionKey { get; init; }
 }
-
 public record DbEvent : IDbEvent
 {
-    public string AggregateGroup { get; init; } = string.Empty;
-    public string PayloadTypeName { get; init; } = string.Empty;
-    public string CausationId { get; init; } = string.Empty;
-    public string CorrelationId { get; init; } = string.Empty;
-    public string ExecutedUser { get; init; } = string.Empty;
+
 
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public Guid Id { get; init; }
 
-    [Column(TypeName = "json")] public string Payload { get; init; } = string.Empty;
+    [Column(TypeName = "json")]
+    public string Payload { get; init; } = string.Empty;
     public string SortableUniqueId { get; init; } = string.Empty;
 
     public int Version { get; init; }
@@ -159,6 +142,12 @@ public record DbEvent : IDbEvent
     public string RootPartitionKey { get; init; } = string.Empty;
     public DateTime TimeStamp { get; init; } = DateTime.MinValue;
     public string PartitionKey { get; init; } = string.Empty;
+
+    public string AggregateGroup { get; init; } = string.Empty;
+    public string PayloadTypeName { get; init; } = string.Empty;
+    public string CausationId { get; init; } = string.Empty;
+    public string CorrelationId { get; init; } = string.Empty;
+    public string ExecutedUser { get; init; } = string.Empty;
 
     public static DbEvent FromEvent(IEvent ev, ISekibanSerializer serializer, IEventTypes eventTypes)
     {
@@ -168,15 +157,8 @@ public record DbEvent : IDbEvent
         {
             Version = document.Version,
             Payload = serializer.Serialize(document.Payload) // need to serialize by type.
-            CallHistories = SekibanJsonHelper.Serialize(ev.CallHistories) ?? string.Empty,
-            Id = ev.Id,
-            AggregateId = ev.PartitionKeys.AggregateId,
-            PartitionKey = ev.PartitionKeys.ToPrimaryKeysString(),
-            DocumentTypeName = ev.GetPayload().GetType().Name,
-            TimeStamp = ev,
-            SortableUniqueId = ev.SortableUniqueId,
-            AggregateType = ev.AggregateType,
-            RootPartitionKey = ev.RootPartitionKey
+
+
         };
     }
 }
