@@ -5,15 +5,13 @@ namespace Sekiban.Pure.Query;
 
 public interface IQueryTypes
 {
-
-    public Task<ResultBox<IQueryResult>> ExecuteAsQueryResult<TMultiProjector>(
+    public Task<ResultBox<IQueryResult>> ExecuteAsQueryResult(
         IQueryCommon query,
         Func<IMultiProjectionEventSelector,
-            ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader) where TMultiProjector : IMultiProjector<TMultiProjector>;
-            
-    public Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult<TMultiProjector>(
+            Task<ResultBox<IMultiProjectorStateCommon>>> repositoryLoader);
+
+    public Task<ResultBox<IListQueryResult>> ExecuteAsQueryResult(
         IListQueryCommon query,
         Func<IMultiProjectionEventSelector,
-            ResultBox<MultiProjectionState<TMultiProjector>>> repositoryLoader) where TMultiProjector : IMultiProjector<TMultiProjector>;
-
+            Task<ResultBox<IMultiProjectorStateCommon>>> repositoryLoader);
 }

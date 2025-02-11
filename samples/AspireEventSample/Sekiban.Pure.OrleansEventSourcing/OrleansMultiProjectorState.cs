@@ -1,4 +1,3 @@
-using Orleans;
 using Sekiban.Pure.Projectors;
 
 namespace Sekiban.Pure.OrleansEventSourcing;
@@ -12,5 +11,10 @@ public record OrleansMultiProjectorState(
     [property: Id(5)] int AppliedSnapshotVersion,
     [property: Id(6)] string RootPartitionKey)
 {
-    public MultiProjectorState ToMultiProjectorState() => new(ProjectorCommon, LastEventId, LastSortableUniqueId, Version, AppliedSnapshotVersion,RootPartitionKey); 
+    public MultiProjectionState ToMultiProjectorState()
+    {
+        return new MultiProjectionState(ProjectorCommon, LastEventId, LastSortableUniqueId, Version,
+            AppliedSnapshotVersion,
+            RootPartitionKey);
+    }
 }
