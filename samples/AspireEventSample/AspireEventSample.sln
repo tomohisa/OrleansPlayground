@@ -20,6 +20,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.CosmosDb", "Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspireEventSample.UnitTest", "AspireEventSample.UnitTest\AspireEventSample.UnitTest.csproj", "{F48D9C78-5CEF-4F1D-9E3D-5965A9374650}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Postgres.MigrationHost", "Sekiban.Pure.Postgres.MigrationHost\Sekiban.Pure.Postgres.MigrationHost.csproj", "{BBF8A62F-41C0-4CA0-9471-029AC4977483}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Postgres", "Sekiban.Pure.Postgres\Sekiban.Pure.Postgres.csproj", "{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +66,14 @@ Global
 		{F48D9C78-5CEF-4F1D-9E3D-5965A9374650}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F48D9C78-5CEF-4F1D-9E3D-5965A9374650}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F48D9C78-5CEF-4F1D-9E3D-5965A9374650}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBF8A62F-41C0-4CA0-9471-029AC4977483}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBF8A62F-41C0-4CA0-9471-029AC4977483}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBF8A62F-41C0-4CA0-9471-029AC4977483}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBF8A62F-41C0-4CA0-9471-029AC4977483}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
