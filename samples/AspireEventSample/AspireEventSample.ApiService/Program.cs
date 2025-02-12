@@ -140,7 +140,8 @@ apiRoute
         "/getMultiProjection",
         async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
         {
-            var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
+            var multiProjectorGrain
+                = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
             var state = await multiProjectorGrain.GetStateAsync();
             return multiProjectorsType.ToTypedState(state.ToMultiProjectorState());
         })
@@ -162,7 +163,7 @@ apiRoute
                 new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
             var aggregateProjectorGrain =
                 clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-            var metadataProvider = new CommandMetadataProvider(
+            var metadataProvider = new FunctionCommandMetadataProvider(
                 () =>
                 {
                     // return executing user from http context + ip address
@@ -188,7 +189,7 @@ apiRoute
                 new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
             var aggregateProjectorGrain =
                 clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-            var metadataProvider = new CommandMetadataProvider(
+            var metadataProvider = new FunctionCommandMetadataProvider(
                 () =>
                 {
                     // return executing user from http context + ip address

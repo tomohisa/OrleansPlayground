@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Postgres.Migra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Postgres", "Sekiban.Pure.Postgres\Sekiban.Pure.Postgres.csproj", "{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.AspNetCore", "Sekiban.Pure.AspNetCore\Sekiban.Pure.AspNetCore.csproj", "{FDD6FC95-6BDB-4D40-BFFD-8251B14FFB80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +76,10 @@ Global
 		{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D9032EE-8F0C-4E06-8622-6FD498F21A1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDD6FC95-6BDB-4D40-BFFD-8251B14FFB80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDD6FC95-6BDB-4D40-BFFD-8251B14FFB80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDD6FC95-6BDB-4D40-BFFD-8251B14FFB80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDD6FC95-6BDB-4D40-BFFD-8251B14FFB80}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
