@@ -1,14 +1,9 @@
-using Sekiban.Pure.OrleansEventSourcing;
-
 namespace AspireEventSample.ApiService.Grains;
 
 using System.Collections.Concurrent;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
 using Orleans;
 using Sekiban.Pure.Documents;
-
-public interface ICartEntityWriter : IEntityWriter<CartEntity>, IGrainWithStringKey { }
-
 public class CartEntityWriter : Grain, ICartEntityWriter
 {
     private readonly ConcurrentDictionary<string, CartEntity> _entities = new();
