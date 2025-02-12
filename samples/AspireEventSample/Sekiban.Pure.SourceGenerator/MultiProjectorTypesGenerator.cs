@@ -133,14 +133,20 @@ public class MultiProjectorTypesGenerator : IIncrementalGenerator
         sb.AppendLine("            => multiProjector switch");
         sb.AppendLine("            {");
 
-        foreach (var type in multiProjectorTypes)
-        {
-            sb.AppendLine(
-                $"                {type.TypeName} {type.TypeName.Split('.').Last().ToCamelCase()} => {type.TypeName.Split('.').Last().ToCamelCase()}.Project({type.TypeName.Split('.').Last().ToCamelCase()}, ev)");
-            sb.AppendLine("                    .Remap(mp => (IMultiProjectorCommon)mp),");
-        }
+foreach (var type in multiProjectorTypes)
+{
+    sb.AppendLine(
+        $"                {type.TypeName} {type.TypeName.Split('.').Last().ToCamelCase()} => {type.TypeName.Split('.').Last().ToCamelCase()}.Project({type.TypeName.Split('.').Last().ToCamelCase()}, ev)");
+    sb.AppendLine("                    .Remap(mp => (IMultiProjectorCommon)mp),");
+}
+foreach (var type in aggregateProjectorTypes)
+{
+    var className = type.RecordName.Split('.').Last().ToCamelCase();
+    sb.AppendLine($"                AggregateListProjector<{type.RecordName}> {className} => {className}.Project({className}, ev)");
+    sb.AppendLine("                    .Remap(mp => (IMultiProjectorCommon)mp),");
+}
 
-        sb.AppendLine("                _ => new ApplicationException(multiProjector.GetType().Name)");
+sb.AppendLine("                _ => new ApplicationException(multiProjector.GetType().Name)");
         sb.AppendLine("            };");
         sb.AppendLine();
         sb.AppendLine(
@@ -151,16 +157,20 @@ public class MultiProjectorTypesGenerator : IIncrementalGenerator
         sb.AppendLine("            => state.ProjectorCommon switch");
         sb.AppendLine("            {");
 
-        foreach (var type in multiProjectorTypes)
-        {
-            var className = type.TypeName.Split('.').Last();
-            sb.AppendLine(
-                $"                {type.TypeName} projector => new MultiProjectionState<{type.TypeName}>(projector, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
-        }
+foreach (var type in multiProjectorTypes)
+{
+    var className = type.TypeName.Split('.').Last();
+    sb.AppendLine(
+        $"                {type.TypeName} projector => new MultiProjectionState<{type.TypeName}>(projector, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
+}
+foreach (var type in aggregateProjectorTypes)
+{
+    sb.AppendLine($"                AggregateListProjector<{type.RecordName}> aggregator => new MultiProjectionState<AggregateListProjector<{type.RecordName}>>(aggregator, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
+}
 
-        sb.AppendLine(
-            "                _ => throw new ArgumentException($\"No state type found for projector type: {state.ProjectorCommon.GetType().Name}\")");
-        sb.AppendLine("            };");
+sb.AppendLine(
+    "                _ => throw new ArgumentException($\"No state type found for projector type: {state.ProjectorCommon.GetType().Name}\")");
+sb.AppendLine("            };");
         sb.AppendLine();
         sb.AppendLine("        public IMultiProjectorCommon GetProjectorFromMultiProjectorName(string grainName)");
         sb.AppendLine("            => grainName switch");
@@ -190,14 +200,5 @@ public class MultiProjectorTypesGenerator : IIncrementalGenerator
     public class MultiProjectorValue
     {
         public string TypeName { get; set; } = string.Empty;
-    }
-}
-public static class StringExtensions
-{
-    public static string ToCamelCase(this string str)
-    {
-        if (string.IsNullOrEmpty(str))
-            return str;
-        return char.ToLowerInvariant(str[0]) + str.Substring(1);
     }
 }
