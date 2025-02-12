@@ -21,6 +21,5 @@ public interface IEventTypes
         JsonSerializerOptions serializeOptions);
 
     public ResultBox<string> SerializePayloadToJson(ISekibanSerializer serializer, IEvent ev);
-
     public void CheckEventJsonContextOption(JsonSerializerOptions options);
 }

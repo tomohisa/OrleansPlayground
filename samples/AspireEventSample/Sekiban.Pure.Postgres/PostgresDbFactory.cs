@@ -3,8 +3,7 @@ namespace Sekiban.Pure.Postgres;
 
 public class PostgresDbFactory(
     SekibanPostgresDbOption dbOption,
-    IPostgresMemoryCacheAccessor memoryCache,
-    IServiceProvider serviceProvider)
+    IPostgresMemoryCacheAccessor memoryCache)
 {
     private static string GetMemoryCacheDbContextKey() => "dbContext.Postgres";
 
@@ -19,13 +18,6 @@ public class PostgresDbFactory(
 
     private async Task<SekibanDbContext> GetDbContextAsync()
     {
-        // var dbContextFromCache = (SekibanDbContext?)memoryCache.Cache.Get(GetMemoryCacheDbContextKey(SekibanContextIdentifier()));
-        //
-        // if (dbContextFromCache is not null)
-        // {
-        //     return dbContextFromCache;
-        // }
-        //
         var connectionString = GetConnectionString();
         var dbContext = new SekibanDbContext(new DbContextOptions<SekibanDbContext>())
             { ConnectionString = connectionString };
