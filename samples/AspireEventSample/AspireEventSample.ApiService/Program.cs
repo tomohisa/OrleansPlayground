@@ -148,6 +148,22 @@ apiRoute
     .WithName("GetMultiProjection")
     .WithOpenApi();
 
+apiRoute
+    .MapGet(
+        "/branchProjectionWithAggregate",
+        async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
+        {
+            var multiProjectorGrain
+                = clusterClient.GetGrain<IMultiProjectorGrain>(
+                    AggregateListProjector<BranchProjector>.GetMultiProjectorName());
+            var state = await multiProjectorGrain.GetStateAsync();
+            return multiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+        })
+    .WithName("branchProjectionWithAggregate")
+    .WithDescription(
+        "This is failing due to no serializer of ListQueryResult AggregateListProjector<BranchProjector>. Can Still use query")
+    .WithOpenApi();
+
 app.MapDefaultEndpoints();
 
 // Add new app.MapPost() method here
@@ -248,7 +264,8 @@ apiRoute
             [FromServices] IClusterClient clusterClient,
             [FromServices] IQueryTypes queryTypes) =>
         {
-            var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
+            var multiProjectorGrain
+                = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
             var result = await multiProjectorGrain.QueryAsync(new BranchExistsQuery(nameContains));
             return queryTypes.ToTypedQueryResult(result.ToQueryResultGeneral()).UnwrapBox();
         })
@@ -263,11 +280,28 @@ apiRoute
             [FromServices] IClusterClient clusterClient,
             [FromServices] IQueryTypes queryTypes) =>
         {
-            var multiProjectorGrain = clusterClient.GetGrain<IMultiProjectorGrain>(nameof(BranchMultiProjector));
+            var multiProjectorGrain
+                = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
             var result = await multiProjectorGrain.QueryAsync(new SimpleBranchListQuery(nameContains));
             return queryTypes.ToTypedListQueryResult(result.ToListQueryResultGeneral()).UnwrapBox();
         })
     .WithName("SearchBranches")
+    .WithOpenApi();
+apiRoute
+    .MapGet(
+        "/searchBranches2",
+        async (
+            [FromQuery] string nameContains,
+            [FromServices] IClusterClient clusterClient,
+            [FromServices] IQueryTypes queryTypes) =>
+        {
+            var multiProjectorGrain
+                = clusterClient.GetGrain<IMultiProjectorGrain>(
+                    AggregateListProjector<BranchProjector>.GetMultiProjectorName());
+            var result = await multiProjectorGrain.QueryAsync(new BranchQueryFromAggregateList(nameContains));
+            return queryTypes.ToTypedListQueryResult(result.ToListQueryResultGeneral()).UnwrapBox();
+        })
+    .WithName("SearchBranches2")
     .WithOpenApi();
 
 app.Run();
