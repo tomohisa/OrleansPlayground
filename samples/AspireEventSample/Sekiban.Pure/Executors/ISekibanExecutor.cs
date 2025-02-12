@@ -1,6 +1,8 @@
 using ResultBoxes;
+using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
+using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
@@ -16,6 +18,7 @@ public interface ISekibanExecutor
         where TResult : notnull;
     public Task<ResultBox<ListQueryResult<TResult>>> ExecuteQueryAsync<TResult>(IListQueryCommon<TResult> queryCommon)
         where TResult : notnull;
+    public Task<ResultBox<Aggregate>> LoadAggregateAsync(PartitionKeys partitionKeys);
 }
 public class InMemorySekibanExecutor(
     IEventTypes eventTypes,
@@ -79,5 +82,6 @@ public class InMemorySekibanExecutor(
         return ResultBox<TResult>.Error(new ApplicationException("Projector not found"));
     }
     public Task<ResultBox<ListQueryResult<TResult>>> ExecuteQueryAsync<TResult>(IListQueryCommon<TResult> queryCommon)
-        where TResult : notnull => throw new NotImplementedException();
+        where TResult : notnull =>;
+    public Task<ResultBox<Aggregate>> LoadAggregateAsync(PartitionKeys partitionKeys) => ;
 }
