@@ -1,5 +1,4 @@
 using Microsoft.Azure.Cosmos;
-using System.Text.Json;
 namespace Sekiban.Pure.CosmosDb;
 
 public record SekibanCosmosClientOptions
@@ -9,18 +8,9 @@ public record SekibanCosmosClientOptions
     /// </summary>
     public CosmosClientOptions ClientOptions { get; init; } = new()
     {
-        Serializer = new SekibanCosmosSerializer(),
         AllowBulkExecution = true,
         MaxRetryAttemptsOnRateLimitedRequests = 200,
         ConnectionMode = ConnectionMode.Gateway,
         GatewayModeMaxConnectionLimit = 200
     };
-    public JsonSerializerOptions JsonSerializerOptions { get; init; } = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true
-    };
-    public static SekibanCosmosClientOptions WithSerializer(JsonSerializerOptions options)
-        => new()
-            { ClientOptions = new CosmosClientOptions { Serializer = new SekibanCosmosSerializer(options) } };
 }

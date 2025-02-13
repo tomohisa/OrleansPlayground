@@ -10,6 +10,7 @@ namespace Sekiban.Pure.Executors;
 
 public interface ISekibanExecutor
 {
+    public SekibanDomainTypes GetDomainTypes();
     public Task<ResultBox<CommandResponse>> ExecuteCommandAsync(
         ICommandWithHandlerSerializable command,
         IEvent? relatedEvent = null);

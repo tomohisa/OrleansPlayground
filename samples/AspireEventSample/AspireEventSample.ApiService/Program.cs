@@ -6,13 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using ResultBoxes;
 using Scalar.AspNetCore;
 using Sekiban.Pure;
+using Sekiban.Pure.AspNetCore;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.CosmosDb;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Postgres;
 using Sekiban.Pure.Projectors;
-using Sekiban.Pure.Query;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -34,39 +34,27 @@ builder.UseOrleans(
         config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
     });
 
+
+// source generator serialization options
+builder.Services.AddSingleton(
+    AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options));
+// general json serializer options
+// builder.Services.AddSingleton(AspireEventSampleApiServiceDomainTypes.Generate());
+
+builder.Services.AddTransient<ICommandMetadataProvider, CommandMetadataProvider>();
+builder.Services.AddTransient<IExecutingUserProvider, HttpExecutingUserProvider>();
 builder.Services.AddHttpContextAccessor();
 
-var domainTypes
-    = AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options);
-builder.Services.AddSingleton(domainTypes);
-// var domainTypes = AspireEventSampleApiServiceDomainTypes.Generate();
+builder.Services.AddTransient<SekibanOrleansExecutor>();
 
 if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.ToLower() == "cosmos")
 {
     // Cosmos settings
-    builder.Services.AddTransient<IEventWriter, CosmosDbEventWriter>();
-    builder.Services.AddTransient<CosmosDbFactory>();
-    builder.Services.AddTransient<IEventReader, CosmosDbEventReader>();
-    builder.Services.AddTransient<ICosmosMemoryCacheAccessor, CosmosMemoryCacheAccessor>();
-    var dbOption =
-        SekibanAzureCosmosDbOption.FromConfiguration(
-            builder.Configuration.GetSection("Sekiban"),
-            builder.Configuration);
-    builder.Services.AddSingleton(dbOption);
-    builder.Services.AddMemoryCache();
-
-    builder.Services.AddSingleton(SekibanCosmosClientOptions.WithSerializer(domainTypes.JsonSerializerOptions));
+    builder.AddSekibanCosmosDb();
 } else
 {
     // Postgres settings
-    builder.Services.AddTransient<IEventWriter, PostgresDbEventWriter>();
-    builder.Services.AddTransient<PostgresDbFactory>();
-    builder.Services.AddTransient<IPostgresMemoryCacheAccessor, PostgresMemoryCacheAccessor>();
-    builder.Services.AddTransient<IEventReader, PostgresDbEventReader>();
-    var dbOption =
-        SekibanPostgresDbOption.FromConfiguration(builder.Configuration.GetSection("Sekiban"), builder.Configuration);
-    builder.Services.AddSingleton(dbOption);
-    builder.Services.AddMemoryCache();
+    builder.AddSekibanPostgresDb();
 }
 var app = builder.Build();
 
@@ -109,12 +97,12 @@ app
 apiRoute
     .MapGet(
         "/getMultiProjection",
-        async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorTypes multiProjectorsType) =>
+        async ([FromServices] IClusterClient clusterClient, [FromServices] SekibanDomainTypes sekibanDomainTypes) =>
         {
             var multiProjectorGrain
                 = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
             var state = await multiProjectorGrain.GetStateAsync();
-            return multiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+            return sekibanDomainTypes.MultiProjectorsType.ToTypedState(state.ToMultiProjectorState());
         })
     .WithName("GetMultiProjection")
     .WithOpenApi();
@@ -122,13 +110,13 @@ apiRoute
 apiRoute
     .MapGet(
         "/branchProjectionWithAggregate",
-        async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorTypes multiProjectorsType) =>
+        async ([FromServices] IClusterClient clusterClient, [FromServices] SekibanDomainTypes sekibanDomainTypes) =>
         {
             var multiProjectorGrain
                 = clusterClient.GetGrain<IMultiProjectorGrain>(
                     AggregateListProjector<BranchProjector>.GetMultiProjectorName());
             var state = await multiProjectorGrain.GetStateAsync();
-            return multiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+            return sekibanDomainTypes.MultiProjectorsType.ToTypedState(state.ToMultiProjectorState());
         })
     .WithName("branchProjectionWithAggregate")
     .WithDescription(
@@ -143,25 +131,7 @@ apiRoute
         "/registerbranch",
         async (
             [FromBody] RegisterBranch command,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IHttpContextAccessor contextAccessor) =>
-        {
-            var partitionKeyAndProjector =
-                new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
-            var aggregateProjectorGrain =
-                clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-            var metadataProvider = new FunctionCommandMetadataProvider(
-                () =>
-                {
-                    // return executing user from http context + ip address
-                    return (contextAccessor.HttpContext?.User?.Identity?.Name ?? "unknown") +
-                        "|" +
-                        (contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "ip unknown");
-                });
-            return await aggregateProjectorGrain.ExecuteCommandAsync(
-                command,
-                OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
-        })
+            [FromServices] SekibanOrleansExecutor executor) => await executor.ExecuteCommandAsync(command).UnwrapBox())
     .WithName("RegisterBranch")
     .WithOpenApi();
 apiRoute
@@ -169,43 +139,21 @@ apiRoute
         "/changebranchname",
         async (
             [FromBody] ChangeBranchName command,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IHttpContextAccessor contextAccessor) =>
-        {
-            var partitionKeyAndProjector =
-                new PartitionKeysAndProjector(command.SpecifyPartitionKeys(command), new BranchProjector());
-            var aggregateProjectorGrain =
-                clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-            var metadataProvider = new FunctionCommandMetadataProvider(
-                () =>
-                {
-                    // return executing user from http context + ip address
-                    return (contextAccessor.HttpContext?.User?.Identity?.Name ?? "unknown") +
-                        "|" +
-                        (contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "ip unknown");
-                });
-            return await aggregateProjectorGrain.ExecuteCommandAsync(
-                command,
-                OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
-        })
+            [FromServices] SekibanOrleansExecutor executor) => await executor.ExecuteCommandAsync(command).UnwrapBox())
     .WithName("ChangeBranchName")
     .WithOpenApi();
 
 apiRoute
     .MapGet(
         "/branch/{branchId}",
-        async (
+        (
             [FromRoute] Guid branchId,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] DomainTypes sekibanTypes) =>
-        {
-            var partitionKeyAndProjector =
-                new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
-            var aggregateProjectorGrain =
-                clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
-            var state = await aggregateProjectorGrain.GetStateAsync();
-            return sekibanTypes.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
-        })
+            [FromServices] SekibanOrleansExecutor executor) => executor
+            .LoadAggregateAsync<BranchProjector>(
+                PartitionKeys<BranchProjector>.Existing(branchId))
+            .Conveyor(aggregate => executor.GetDomainTypes().AggregateTypes.ToTypedPayload(aggregate))
+            .UnwrapBox()
+    )
     .WithName("GetBranch")
     .WithOpenApi();
 
@@ -215,7 +163,7 @@ apiRoute
         async (
             [FromRoute] Guid branchId,
             [FromServices] IClusterClient clusterClient,
-            [FromServices] DomainTypes sekibanTypes) =>
+            [FromServices] SekibanDomainTypes sekibanTypes) =>
         {
             var partitionKeyAndProjector =
                 new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
@@ -230,48 +178,29 @@ apiRoute
 apiRoute
     .MapGet(
         "/branchExists/{nameContains}",
-        async (
-            [FromRoute] string nameContains,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IQueryTypes queryTypes) =>
-        {
-            var multiProjectorGrain
-                = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
-            var result = await multiProjectorGrain.QueryAsync(new BranchExistsQuery(nameContains));
-            return queryTypes.ToTypedQueryResult(result.ToQueryResultGeneral()).UnwrapBox();
-        })
+        (
+                [FromRoute] string nameContains,
+                [FromServices] SekibanOrleansExecutor executor) =>
+            executor.ExecuteQueryAsync(new BranchExistsQuery(nameContains)).UnwrapBox())
     .WithName("BranchExists")
     .WithOpenApi();
 
 apiRoute
     .MapGet(
         "/searchBranches",
-        async (
-            [FromQuery] string nameContains,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IQueryTypes queryTypes) =>
-        {
-            var multiProjectorGrain
-                = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
-            var result = await multiProjectorGrain.QueryAsync(new SimpleBranchListQuery(nameContains));
-            return queryTypes.ToTypedListQueryResult(result.ToListQueryResultGeneral()).UnwrapBox();
-        })
+        (
+                [FromQuery] string nameContains,
+                [FromServices] SekibanOrleansExecutor executor) =>
+            executor.ExecuteQueryAsync(new SimpleBranchListQuery(nameContains)).UnwrapBox())
     .WithName("SearchBranches")
     .WithOpenApi();
 apiRoute
     .MapGet(
         "/searchBranches2",
-        async (
-            [FromQuery] string nameContains,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IQueryTypes queryTypes) =>
-        {
-            var multiProjectorGrain
-                = clusterClient.GetGrain<IMultiProjectorGrain>(
-                    AggregateListProjector<BranchProjector>.GetMultiProjectorName());
-            var result = await multiProjectorGrain.QueryAsync(new BranchQueryFromAggregateList(nameContains));
-            return queryTypes.ToTypedListQueryResult(result.ToListQueryResultGeneral()).UnwrapBox();
-        })
+        (
+                [FromQuery] string nameContains,
+                [FromServices] SekibanOrleansExecutor executor) =>
+            executor.ExecuteQueryAsync(new BranchQueryFromAggregateList(nameContains)).UnwrapBox())
     .WithName("SearchBranches2")
     .WithOpenApi();
 

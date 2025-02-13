@@ -9,11 +9,11 @@ public class PostgresDbEventWriter : IEventWriter
     private readonly IEventTypes _eventTypes;
     private readonly ISekibanSerializer _serializer;
 
-    public PostgresDbEventWriter(PostgresDbFactory dbFactory, DomainTypes domainTypes)
+    public PostgresDbEventWriter(PostgresDbFactory dbFactory, SekibanDomainTypes sekibanDomainTypes)
     {
         _dbFactory = dbFactory;
-        _eventTypes = domainTypes.EventTypes;
-        _serializer = domainTypes.Serializer;
+        _eventTypes = sekibanDomainTypes.EventTypes;
+        _serializer = sekibanDomainTypes.Serializer;
     }
 
     public async Task SaveEvents<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent

@@ -5,7 +5,7 @@ using Sekiban.Pure.Events;
 using Sekiban.Pure.OrleansEventSourcing;
 namespace Sekiban.Pure.CosmosDb;
 
-public class CosmosDbEventWriter(CosmosDbFactory dbFactory, DomainTypes domainTypes) : IEventWriter
+public class CosmosDbEventWriter(CosmosDbFactory dbFactory, SekibanDomainTypes sekibanDomainTypes) : IEventWriter
 {
 
     public Task SaveEvents<TEvent>(IEnumerable<TEvent> events) where TEvent : IEvent => dbFactory.CosmosActionAsync(
@@ -14,7 +14,7 @@ public class CosmosDbEventWriter(CosmosDbFactory dbFactory, DomainTypes domainTy
         {
             var taskList = events
                 .ToList()
-                .Select(ev => domainTypes.EventTypes.ConvertToEventDocument(ev))
+                .Select(ev => sekibanDomainTypes.EventTypes.ConvertToEventDocument(ev))
                 .Select(ev => SaveEventFromEventDocument(ev.UnwrapBox(), container))
                 .ToList();
             await Task.WhenAll(taskList);

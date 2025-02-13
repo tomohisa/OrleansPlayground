@@ -7,7 +7,7 @@ namespace Sekiban.Pure.OrleansEventSourcing;
 public class AggregateProjectorGrain(
     [PersistentState("aggregate", "Default")]
     IPersistentState<Aggregate> state,
-    DomainTypes domainTypes) : Grain, IAggregateProjectorGrain
+    SekibanDomainTypes sekibanDomainTypes) : Grain, IAggregateProjectorGrain
 {
     private OptionalValue<PartitionKeysAndProjector> _partitionKeysAndProjector
         = OptionalValue<PartitionKeysAndProjector>.Empty;
@@ -51,7 +51,7 @@ public class AggregateProjectorGrain(
     {
         if (_partitionKeysAndProjector.HasValue) return _partitionKeysAndProjector.GetValue();
         _partitionKeysAndProjector = PartitionKeysAndProjector
-            .FromGrainKey(this.GetPrimaryKeyString(), domainTypes.AggregateProjectorSpecifier)
+            .FromGrainKey(this.GetPrimaryKeyString(), sekibanDomainTypes.AggregateProjectorSpecifier)
             .UnwrapBox();
         return _partitionKeysAndProjector.GetValue();
     }
@@ -80,7 +80,9 @@ public class AggregateProjectorGrain(
         {
             var events = await eventHandlerGrain.GetDeltaEventsAsync(read.LastSortableUniqueId);
             read = read
-                .Project(events.ToList().ToEvents(domainTypes.EventTypes), GetPartitionKeysAndProjector().Projector)
+                .Project(
+                    events.ToList().ToEvents(sekibanDomainTypes.EventTypes),
+                    GetPartitionKeysAndProjector().Projector)
                 .UnwrapBox();
             UpdatedAfterWrite = true;
         }
@@ -98,9 +100,9 @@ public class AggregateProjectorGrain(
             eventGrain,
             GetPartitionKeysAndProjector().PartitionKeys,
             GetPartitionKeysAndProjector().Projector,
-            domainTypes.EventTypes,
+            sekibanDomainTypes.EventTypes,
             await GetStateInternalAsync(eventGrain));
-        var commandExecutor = new CommandExecutor { EventTypes = domainTypes.EventTypes };
+        var commandExecutor = new CommandExecutor { EventTypes = sekibanDomainTypes.EventTypes };
         var result = await commandExecutor
             .ExecuteGeneralNonGeneric(
                 orleansCommand,
@@ -127,7 +129,7 @@ public class AggregateProjectorGrain(
             eventGrain,
             GetPartitionKeysAndProjector().PartitionKeys,
             GetPartitionKeysAndProjector().Projector,
-            domainTypes.EventTypes,
+            sekibanDomainTypes.EventTypes,
             Aggregate.EmptyFromPartitionKeys(GetPartitionKeysAndProjector().PartitionKeys));
         var aggregate = await orleansRepository.Load().UnwrapBox();
         state.State = aggregate;

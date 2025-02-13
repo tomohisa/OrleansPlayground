@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Sekiban.Pure\Sekiban.Pure.csproj"/>
+        <ProjectReference Include="..\Sekiban.Pure.AspNetCore\Sekiban.Pure.AspNetCore.csproj"/>
     </ItemGroup>
 
 </Project>
