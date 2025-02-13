@@ -33,24 +33,44 @@ public class SekibanOrleansExecutor(
             OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
         return toReturn.ToCommandResponse(sekibanDomainTypes.EventTypes);
     }
-    public Task<ResultBox<TResult>> ExecuteQueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
+    public async Task<ResultBox<TResult>> ExecuteQueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
         where TResult : notnull
     {
         var projectorResult = sekibanDomainTypes.QueryTypes.GetMultiProjector(queryCommon);
         if (!projectorResult.IsSuccess)
-            return Task.FromResult(ResultBox<TResult>.Error(new ApplicationException("Projector not found")));
+            return ResultBox<TResult>.Error(new ApplicationException("Projector not found"));
         var nameResult
             = sekibanDomainTypes.MultiProjectorsType
                 .GetMultiProjectorNameFromMultiProjector(projectorResult.GetValue());
-
+        if (!nameResult.IsSuccess)
+            return ResultBox<TResult>.Error(new ApplicationException("Projector name not found"));
         var multiProjectorGrain
-            = clusterClient.GetGrain<IMultiProjectorGrain>(projectorResult.GetValue());
-        var result = await multiProjectorGrain.QueryAsync(new BranchExistsQuery(nameContains));
-        return queryTypes.ToTypedQueryResult(result.ToQueryResultGeneral()).;
-
+            = clusterClient.GetGrain<IMultiProjectorGrain>(nameResult.GetValue());
+        var result = await multiProjectorGrain.QueryAsync(queryCommon);
+        return sekibanDomainTypes
+            .QueryTypes
+            .ToTypedQueryResult(result.ToQueryResultGeneral())
+            .Remap(r => (TResult)r);
     }
-    public Task<ResultBox<ListQueryResult<TResult>>> ExecuteQueryAsync<TResult>(IListQueryCommon<TResult> queryCommon)
-        where TResult : notnull => throw new NotImplementedException();
+    public async Task<ResultBox<ListQueryResult<TResult>>> ExecuteQueryAsync<TResult>(
+        IListQueryCommon<TResult> queryCommon)
+    {
+        var projectorResult = sekibanDomainTypes.QueryTypes.GetMultiProjector(queryCommon);
+        if (!projectorResult.IsSuccess)
+            return ResultBox<ListQueryResult<TResult>>.Error(new ApplicationException("Projector not found"));
+        var nameResult
+            = sekibanDomainTypes.MultiProjectorsType
+                .GetMultiProjectorNameFromMultiProjector(projectorResult.GetValue());
+        if (!nameResult.IsSuccess)
+            return ResultBox<ListQueryResult<TResult>>.Error(new ApplicationException("Projector name not found"));
+        var multiProjectorGrain
+            = clusterClient.GetGrain<IMultiProjectorGrain>(nameResult.GetValue());
+        var result = await multiProjectorGrain.QueryAsync(queryCommon);
+        return sekibanDomainTypes
+            .QueryTypes
+            .ToTypedListQueryResult(result.ToListQueryResultGeneral())
+            .Remap(r => (ListQueryResult<TResult>)r);
+    }
     public async Task<ResultBox<Aggregate>> LoadAggregateAsync<TAggregateProjector>(PartitionKeys partitionKeys)
         where TAggregateProjector : IAggregateProjector, new()
     {

@@ -13,7 +13,6 @@ using Sekiban.Pure.Documents;
 using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Postgres;
 using Sekiban.Pure.Projectors;
-using Sekiban.Pure.Query;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -181,48 +180,29 @@ apiRoute
 apiRoute
     .MapGet(
         "/branchExists/{nameContains}",
-        async (
-            [FromRoute] string nameContains,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IQueryTypes queryTypes) =>
-        {
-            var multiProjectorGrain
-                = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
-            var result = await multiProjectorGrain.QueryAsync(new BranchExistsQuery(nameContains));
-            return queryTypes.ToTypedQueryResult(result.ToQueryResultGeneral()).UnwrapBox();
-        })
+        (
+                [FromRoute] string nameContains,
+                [FromServices] SekibanOrleansExecutor executor) =>
+            executor.ExecuteQueryAsync(new BranchExistsQuery(nameContains)).UnwrapBox())
     .WithName("BranchExists")
     .WithOpenApi();
 
 apiRoute
     .MapGet(
         "/searchBranches",
-        async (
-            [FromQuery] string nameContains,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IQueryTypes queryTypes) =>
-        {
-            var multiProjectorGrain
-                = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
-            var result = await multiProjectorGrain.QueryAsync(new SimpleBranchListQuery(nameContains));
-            return queryTypes.ToTypedListQueryResult(result.ToListQueryResultGeneral()).UnwrapBox();
-        })
+        (
+                [FromQuery] string nameContains,
+                [FromServices] SekibanOrleansExecutor executor) =>
+            executor.ExecuteQueryAsync(new SimpleBranchListQuery(nameContains)).UnwrapBox())
     .WithName("SearchBranches")
     .WithOpenApi();
 apiRoute
     .MapGet(
         "/searchBranches2",
-        async (
-            [FromQuery] string nameContains,
-            [FromServices] IClusterClient clusterClient,
-            [FromServices] IQueryTypes queryTypes) =>
-        {
-            var multiProjectorGrain
-                = clusterClient.GetGrain<IMultiProjectorGrain>(
-                    AggregateListProjector<BranchProjector>.GetMultiProjectorName());
-            var result = await multiProjectorGrain.QueryAsync(new BranchQueryFromAggregateList(nameContains));
-            return queryTypes.ToTypedListQueryResult(result.ToListQueryResultGeneral()).UnwrapBox();
-        })
+        (
+                [FromQuery] string nameContains,
+                [FromServices] SekibanOrleansExecutor executor) =>
+            executor.ExecuteQueryAsync(new BranchQueryFromAggregateList(nameContains)).UnwrapBox())
     .WithName("SearchBranches2")
     .WithOpenApi();
 

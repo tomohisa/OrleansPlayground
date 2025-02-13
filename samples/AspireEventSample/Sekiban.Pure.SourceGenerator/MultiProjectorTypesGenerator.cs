@@ -193,6 +193,20 @@ public class MultiProjectorTypesGenerator : IIncrementalGenerator
         sb.AppendLine(
             "                _ => throw new ArgumentException($\"No projector found for grain name: {grainName}\")");
         sb.AppendLine("            };");
+        sb.AppendLine("        public ResultBox<string> GetMultiProjectorNameFromMultiProjector(IMultiProjectorCommon multiProjector)");
+        sb.AppendLine("            => multiProjector switch");
+        sb.AppendLine("            {");
+        foreach (var type in multiProjectorTypes)
+        {
+            var className = type.TypeName.Split('.').Last();
+            sb.AppendLine($"                {type.TypeName} projector => ResultBox.FromValue({type.TypeName}.GetMultiProjectorName()),");
+        }
+        foreach (var type in aggregateProjectorTypes)
+        {
+            sb.AppendLine($"                AggregateListProjector<{type.RecordName}> aggregator => ResultBox.FromValue(AggregateListProjector<{type.RecordName}>.GetMultiProjectorName()),");
+        }
+        sb.AppendLine("                _ => ResultBox<string>.Error(new ApplicationException(multiProjector.GetType().Name))");
+        sb.AppendLine("            };");
         sb.AppendLine("    }");
         sb.AppendLine("}");
 
