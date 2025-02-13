@@ -57,7 +57,6 @@ if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.To
     builder.AddSekibanPostgresDb();
 }
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
