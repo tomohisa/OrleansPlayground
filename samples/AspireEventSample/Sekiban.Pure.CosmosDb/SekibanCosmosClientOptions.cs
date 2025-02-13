@@ -1,6 +1,5 @@
-using System.Text.Json;
 using Microsoft.Azure.Cosmos;
-
+using System.Text.Json;
 namespace Sekiban.Pure.CosmosDb;
 
 public record SekibanCosmosClientOptions
@@ -21,4 +20,7 @@ public record SekibanCosmosClientOptions
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
     };
+    public static SekibanCosmosClientOptions WithSerializer(JsonSerializerOptions options)
+        => new()
+            { ClientOptions = new CosmosClientOptions { Serializer = new SekibanCosmosSerializer(options) } };
 }

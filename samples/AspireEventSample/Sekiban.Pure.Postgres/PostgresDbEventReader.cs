@@ -13,11 +13,11 @@ public class PostgresDbEventReader : IEventReader
     private readonly IEventTypes _eventTypes;
     private readonly ISekibanSerializer _serializer;
 
-    public PostgresDbEventReader(PostgresDbFactory dbFactory, IEventTypes eventTypes, ISekibanSerializer serializer)
+    public PostgresDbEventReader(PostgresDbFactory dbFactory, DomainTypes domainTypes)
     {
         _dbFactory = dbFactory;
-        _eventTypes = eventTypes;
-        _serializer = serializer;
+        _eventTypes = domainTypes.EventTypes;
+        _serializer = domainTypes.Serializer;
     }
 
     public async Task<ResultBox<IReadOnlyList<IEvent>>> GetEvents(EventRetrievalInfo eventRetrievalInfo)

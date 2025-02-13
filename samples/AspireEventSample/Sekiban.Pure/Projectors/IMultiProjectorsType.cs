@@ -2,7 +2,7 @@ using ResultBoxes;
 using Sekiban.Pure.Events;
 namespace Sekiban.Pure.Projectors;
 
-public interface IMultiProjectorsType
+public interface IMultiProjectorTypes
 {
     ResultBox<IMultiProjectorCommon> Project(IMultiProjectorCommon multiProjector, IEvent ev);
 

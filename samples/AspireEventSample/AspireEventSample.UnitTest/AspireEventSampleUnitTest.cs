@@ -1,6 +1,7 @@
-﻿﻿using AspireEventSample.ApiService.Aggregates.Branches;
+﻿using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Projections;
+using Sekiban.Pure;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Executors;
@@ -9,6 +10,10 @@ namespace AspireEventSample.UnitTest;
 
 public class AspireEventSampleUnitTest
 {
+    private DomainTypes DomainTypes { get; }
+        = AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options);
+    private ICommandMetadataProvider CommandMetadataProvider { get; }
+        = new FunctionCommandMetadataProvider(() => "test");
     [Fact]
     public void BranchExistsQueryTest()
     {
@@ -21,11 +26,7 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task RegisterBranchTest()
     {
-        var executor = new InMemorySekibanExecutor(
-            new AspireEventSampleApiServiceEventTypes(),
-            new FunctionCommandMetadataProvider(() => "test"),
-            new AspireEventSampleApiServiceQueryTypes(),
-            new AspireEventSampleApiServiceMultiProjectorType());
+        var executor = new InMemorySekibanExecutor(DomainTypes, CommandMetadataProvider);
 
         var result1 = await executor.ExecuteCommandAsync(new RegisterBranch("DDD"));
         Assert.True(result1.IsSuccess);
@@ -39,11 +40,7 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task SimpleBranchListQueryTest()
     {
-        var executor = new InMemorySekibanExecutor(
-            new AspireEventSampleApiServiceEventTypes(),
-            new FunctionCommandMetadataProvider(() => "test"),
-            new AspireEventSampleApiServiceQueryTypes(),
-            new AspireEventSampleApiServiceMultiProjectorType());
+        var executor = new InMemorySekibanExecutor(DomainTypes, CommandMetadataProvider);
 
         // Register a branch to generate events
         var commandResult = await executor.ExecuteCommandAsync(new RegisterBranch("TestList"));
@@ -57,11 +54,7 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task LoadAggregateTest()
     {
-        var executor = new InMemorySekibanExecutor(
-            new AspireEventSampleApiServiceEventTypes(),
-            new FunctionCommandMetadataProvider(() => "test"),
-            new AspireEventSampleApiServiceQueryTypes(),
-            new AspireEventSampleApiServiceMultiProjectorType());
+        var executor = new InMemorySekibanExecutor(DomainTypes, CommandMetadataProvider);
 
         // Register a branch to generate events
         var commandResult = await executor.ExecuteCommandAsync(new RegisterBranch("TestLoad"));

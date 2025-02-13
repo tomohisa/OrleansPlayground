@@ -5,11 +5,10 @@ using Sekiban.Pure.Query;
 namespace Sekiban.Pure.OrleansEventSourcing;
 
 public class MultiProjectorGrain(
-    IMultiProjectorsType multiProjectorsType,
     [PersistentState("multiProjector", "Default")]
     IPersistentState<OrleansMultiProjectorState> safeState,
     IEventReader eventReader,
-    IQueryTypes queryTypes) : Grain, IMultiProjectorGrain
+    DomainTypes domainTypes) : Grain, IMultiProjectorGrain
 {
     private static readonly TimeSpan SafeStateTime = TimeSpan.FromSeconds(10);
     private OrleansMultiProjectorState? UnsafeState { get; set; }
@@ -23,7 +22,7 @@ public class MultiProjectorGrain(
         var safeTimeThreshold = currentTime.Subtract(SafeStateTime);
 
         if (events.Count == 0) return;
-        var projectedState = multiProjectorsType.Project(projector, events).UnwrapBox();
+        var projectedState = domainTypes.MultiProjectorsType.Project(projector, events).UnwrapBox();
 
         // Split events into safe and unsafe based on time
         var lastEvent = events[^1];
@@ -55,7 +54,7 @@ public class MultiProjectorGrain(
             {
                 var safeEvents = events.Take(splitIndex + 1).ToList();
                 var lastSafeEvent = safeEvents[^1];
-                var safeProjectedState = multiProjectorsType.Project(projector, safeEvents).UnwrapBox();
+                var safeProjectedState = domainTypes.MultiProjectorsType.Project(projector, safeEvents).UnwrapBox();
                 safeState.State = new OrleansMultiProjectorState(
                     safeProjectedState,
                     lastSafeEvent.Id,
@@ -96,7 +95,7 @@ public class MultiProjectorGrain(
         var currentTime = DateTime.UtcNow;
         var safeTimeThreshold = currentTime.Subtract(SafeStateTime);
 
-        var projectedState = multiProjectorsType.Project(safeState.State.ProjectorCommon, events).UnwrapBox();
+        var projectedState = domainTypes.MultiProjectorsType.Project(safeState.State.ProjectorCommon, events).UnwrapBox();
 
         var lastEvent = events[^1];
         var lastEventSortableId = new SortableUniqueIdValue(lastEvent.SortableUniqueId);
@@ -128,7 +127,7 @@ public class MultiProjectorGrain(
                 var safeEvents = events.Take(splitIndex + 1).ToList();
                 var lastSafeEvent = safeEvents[^1];
                 var safeProjectedState =
-                    multiProjectorsType.Project(safeState.State.ProjectorCommon, safeEvents).UnwrapBox();
+                    domainTypes.MultiProjectorsType.Project(safeState.State.ProjectorCommon, safeEvents).UnwrapBox();
                 safeState.State = new OrleansMultiProjectorState(
                     safeProjectedState,
                     lastSafeEvent.Id,
@@ -158,7 +157,7 @@ public class MultiProjectorGrain(
 
     public async Task<OrleansQueryResultGeneral> QueryAsync(IQueryCommon query)
     {
-        var result = await queryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery) ??
+        var result = await domainTypes.QueryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery) ??
             throw new ApplicationException("Query not found");
         return result
             .Remap(value => value.ToGeneral(query))
@@ -168,7 +167,7 @@ public class MultiProjectorGrain(
 
     public async Task<OrleansListQueryResultGeneral> QueryAsync(IListQueryCommon query)
     {
-        var result = await queryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery) ??
+        var result = await domainTypes.QueryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery) ??
             throw new ApplicationException("Query not found");
         return result
             .Remap(value => value.ToGeneral(query))
@@ -189,7 +188,7 @@ public class MultiProjectorGrain(
     public IMultiProjectorCommon GetProjectorFromMultiProjectorName()
     {
         var grainName = this.GetPrimaryKeyString();
-        return multiProjectorsType.GetProjectorFromMultiProjectorName(grainName);
+        return domainTypes.MultiProjectorsType.GetProjectorFromMultiProjectorName(grainName);
     }
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)

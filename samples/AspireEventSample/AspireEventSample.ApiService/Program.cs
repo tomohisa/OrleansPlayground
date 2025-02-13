@@ -3,19 +3,16 @@ using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Projections;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
 using ResultBoxes;
 using Scalar.AspNetCore;
+using Sekiban.Pure;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.CosmosDb;
 using Sekiban.Pure.Documents;
-using Sekiban.Pure.Events;
 using Sekiban.Pure.OrleansEventSourcing;
 using Sekiban.Pure.Postgres;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
-using Sekiban.Pure.Serialize;
-using Sekiban.Pure.Types;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -37,66 +34,40 @@ builder.UseOrleans(
         config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
     });
 
-builder.Services.AddSingleton(
-    new SekibanTypeConverters(
-        new AspireEventSampleApiServiceAggregateTypes(),
-        new AspireEventSampleApiServiceEventTypes(),
-        new AspireEventSampleApiServiceAggregateProjectorSpecifier()));
-
 builder.Services.AddHttpContextAccessor();
 
+var domainTypes
+    = AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options);
+builder.Services.AddSingleton(domainTypes);
+// var domainTypes = AspireEventSampleApiServiceDomainTypes.Generate();
 
 if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.ToLower() == "cosmos")
 {
     // Cosmos settings
     builder.Services.AddTransient<IEventWriter, CosmosDbEventWriter>();
     builder.Services.AddTransient<CosmosDbFactory>();
+    builder.Services.AddTransient<IEventReader, CosmosDbEventReader>();
     builder.Services.AddTransient<ICosmosMemoryCacheAccessor, CosmosMemoryCacheAccessor>();
-    builder.Services.AddTransient<IEventTypes, AspireEventSampleApiServiceEventTypes>();
     var dbOption =
         SekibanAzureCosmosDbOption.FromConfiguration(
             builder.Configuration.GetSection("Sekiban"),
             builder.Configuration);
     builder.Services.AddSingleton(dbOption);
-    builder.Services.AddTransient<IEventReader, CosmosDbEventReader>();
     builder.Services.AddMemoryCache();
 
-    // builder.Services.AddSingleton(new SekibanCosmosClientOptions());
-    builder.Services.AddSingleton(
-        new SekibanCosmosClientOptions
-        {
-            ClientOptions = new CosmosClientOptions
-            {
-                Serializer =
-                    new SourceGenCosmosSerializer<AspireEventSampleApiServiceEventTypes>(
-                        AspireEventSampleApiServiceEventsJsonContext.Default.Options),
-                AllowBulkExecution = true,
-                MaxRetryAttemptsOnRateLimitedRequests = 200,
-                ConnectionMode = ConnectionMode.Gateway,
-                GatewayModeMaxConnectionLimit = 200
-            }
-        });
+    builder.Services.AddSingleton(SekibanCosmosClientOptions.WithSerializer(domainTypes.JsonSerializerOptions));
 } else
 {
     // Postgres settings
     builder.Services.AddTransient<IEventWriter, PostgresDbEventWriter>();
     builder.Services.AddTransient<PostgresDbFactory>();
     builder.Services.AddTransient<IPostgresMemoryCacheAccessor, PostgresMemoryCacheAccessor>();
-    builder.Services.AddTransient<IEventTypes, AspireEventSampleApiServiceEventTypes>();
+    builder.Services.AddTransient<IEventReader, PostgresDbEventReader>();
     var dbOption =
         SekibanPostgresDbOption.FromConfiguration(builder.Configuration.GetSection("Sekiban"), builder.Configuration);
     builder.Services.AddSingleton(dbOption);
-    builder.Services.AddTransient<IEventReader, PostgresDbEventReader>();
     builder.Services.AddMemoryCache();
-    // builder.Services.AddSingleton<ISekibanSerializer, SekibanReflectionSerializer>();
-    builder.Services.AddSingleton<ISekibanSerializer>(
-        SekibanSourceGenSerializer.FromOptions<AspireEventSampleApiServiceEventTypes>(
-            AspireEventSampleApiServiceEventsJsonContext.Default.Options));
 }
-
-
-builder.Services.AddTransient<IMultiProjectorsType, AspireEventSampleApiServiceMultiProjectorType>();
-builder.Services.AddTransient<IQueryTypes, AspireEventSampleApiServiceQueryTypes>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -138,7 +109,7 @@ app
 apiRoute
     .MapGet(
         "/getMultiProjection",
-        async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
+        async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorTypes multiProjectorsType) =>
         {
             var multiProjectorGrain
                 = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
@@ -151,7 +122,7 @@ apiRoute
 apiRoute
     .MapGet(
         "/branchProjectionWithAggregate",
-        async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorsType multiProjectorsType) =>
+        async ([FromServices] IClusterClient clusterClient, [FromServices] IMultiProjectorTypes multiProjectorsType) =>
         {
             var multiProjectorGrain
                 = clusterClient.GetGrain<IMultiProjectorGrain>(
@@ -226,14 +197,14 @@ apiRoute
         async (
             [FromRoute] Guid branchId,
             [FromServices] IClusterClient clusterClient,
-            [FromServices] SekibanTypeConverters typeConverters) =>
+            [FromServices] DomainTypes sekibanTypes) =>
         {
             var partitionKeyAndProjector =
                 new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
             var aggregateProjectorGrain =
                 clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
             var state = await aggregateProjectorGrain.GetStateAsync();
-            return typeConverters.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
+            return sekibanTypes.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
         })
     .WithName("GetBranch")
     .WithOpenApi();
@@ -244,14 +215,14 @@ apiRoute
         async (
             [FromRoute] Guid branchId,
             [FromServices] IClusterClient clusterClient,
-            [FromServices] SekibanTypeConverters typeConverters) =>
+            [FromServices] DomainTypes sekibanTypes) =>
         {
             var partitionKeyAndProjector =
                 new PartitionKeysAndProjector(PartitionKeys<BranchProjector>.Existing(branchId), new BranchProjector());
             var aggregateProjectorGrain =
                 clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
             var state = await aggregateProjectorGrain.RebuildStateAsync();
-            return typeConverters.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
+            return sekibanTypes.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
         })
     .WithName("GetBranchReload")
     .WithOpenApi();
