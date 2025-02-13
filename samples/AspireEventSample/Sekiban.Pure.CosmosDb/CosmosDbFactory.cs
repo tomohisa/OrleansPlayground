@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Caching.Memory;
@@ -6,13 +5,14 @@ using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Exceptions;
-
+using System.Text.Json;
 namespace Sekiban.Pure.CosmosDb;
 
 public class CosmosDbFactory(
     ICosmosMemoryCacheAccessor cosmosMemoryCache,
     SekibanCosmosClientOptions options,
-    SekibanAzureCosmosDbOption sekibanAzureCosmosDbOptions)
+    SekibanAzureCosmosDbOption sekibanAzureCosmosDbOptions,
+    SekibanDomainTypes sekibanDomainTypes)
 {
     public Func<Task<CosmosClient?>> SearchCosmosClientAsync { get; set; } = async () =>
     {
@@ -20,10 +20,7 @@ public class CosmosDbFactory(
         return null;
     };
 
-    public JsonSerializerOptions GetJsonSerializerOptions()
-    {
-        return options.JsonSerializerOptions;
-    }
+    public JsonSerializerOptions GetJsonSerializerOptions() => sekibanDomainTypes.JsonSerializerOptions;
 
     public async Task DeleteAllFromEventContainer()
     {
@@ -31,7 +28,8 @@ public class CosmosDbFactory(
     }
 
     public async Task<T> CosmosActionAsync<T>(
-        DocumentType documentType, Func<Container, Task<T>> cosmosAction)
+        DocumentType documentType,
+        Func<Container, Task<T>> cosmosAction)
     {
         try
         {
@@ -72,34 +70,23 @@ public class CosmosDbFactory(
     private static string GetMemoryCacheContainerKey(
         DocumentType documentType,
         string databaseId,
-        string containerId)
-    {
-        return $"{(documentType == DocumentType.Event ? "event." : "")}cosmosdb.container.{databaseId}.{containerId}";
-    }
+        string containerId) =>
+        $"{(documentType == DocumentType.Event ? "event." : "")}cosmosdb.container.{databaseId}.{containerId}";
 
-    private static string GetMemoryCacheClientKey(DocumentType documentType)
-    {
-        return $"{(documentType == DocumentType.Event ? "event." : "")}cosmosdb.client";
-    }
+    private static string GetMemoryCacheClientKey(DocumentType documentType) =>
+        $"{(documentType == DocumentType.Event ? "event." : "")}cosmosdb.client";
 
-    private static string GetMemoryCacheDatabaseKey(DocumentType documentType, string databaseId)
-    {
-        return $"{(documentType == DocumentType.Event ? "event." : "")}cosmosdb.container.{databaseId}";
-    }
+    private static string GetMemoryCacheDatabaseKey(DocumentType documentType, string databaseId) =>
+        $"{(documentType == DocumentType.Event ? "event." : "")}cosmosdb.container.{databaseId}";
 
-    private string GetUri()
-    {
-        return sekibanAzureCosmosDbOptions.CosmosEndPointUrl ?? string.Empty;
-    }
+    private string GetUri() => sekibanAzureCosmosDbOptions.CosmosEndPointUrl ?? string.Empty;
 
-    private string GetSecurityKey()
-    {
-        return sekibanAzureCosmosDbOptions.CosmosAuthorizationKey ?? string.Empty;
-    }
+    private string GetSecurityKey() => sekibanAzureCosmosDbOptions.CosmosAuthorizationKey ?? string.Empty;
 
     private ResultBox<string> GetConnectionString()
     {
-        return ResultBox<SekibanAzureCosmosDbOption>.FromValue(sekibanAzureCosmosDbOptions)
+        return ResultBox<SekibanAzureCosmosDbOption>
+            .FromValue(sekibanAzureCosmosDbOptions)
             .Conveyor(
                 azureOptions => azureOptions.CosmosConnectionString switch
                 {
@@ -108,10 +95,7 @@ public class CosmosDbFactory(
                 });
     }
 
-    public string GetDatabaseId()
-    {
-        return sekibanAzureCosmosDbOptions.CosmosDatabase ?? string.Empty;
-    }
+    public string GetDatabaseId() => sekibanAzureCosmosDbOptions.CosmosDatabase ?? string.Empty;
 
     public Container? GetContainerFromCache(DocumentType documentType)
     {
@@ -158,13 +142,14 @@ public class CosmosDbFactory(
         await Task.CompletedTask;
         var client = cosmosMemoryCache.Cache.Get<CosmosClient?>(GetMemoryCacheClientKey(documentType));
         if (client is not null) return client;
+        options.ClientOptions.Serializer = new SekibanCosmosSerializer(sekibanDomainTypes.JsonSerializerOptions);
         var clientOptions = options.ClientOptions;
         client = await SearchCosmosClientAsync() ??
-                 GetConnectionString() switch
-                 {
-                     { IsSuccess: true } value => new CosmosClient(value.GetValue(), clientOptions),
-                     _ => GetCosmosClientFromUriAndKey()
-                 };
+            GetConnectionString() switch
+            {
+                { IsSuccess: true } value => new CosmosClient(value.GetValue(), clientOptions),
+                _ => GetCosmosClientFromUriAndKey()
+            };
         cosmosMemoryCache.Cache.Set(GetMemoryCacheClientKey(documentType), client, new MemoryCacheEntryOptions());
         return client;
     }
@@ -208,9 +193,13 @@ public class CosmosDbFactory(
                         var rootPartitionKey = item.RootPartitionKey;
                         var aggregateType = item.AggregateType;
 
-                        deleteItemIds.Add((id,
-                            new PartitionKeyBuilder().Add(rootPartitionKey).Add(aggregateType).Add(partitionKey)
-                                .Build()));
+                        deleteItemIds.Add(
+                            (id,
+                                new PartitionKeyBuilder()
+                                    .Add(rootPartitionKey)
+                                    .Add(aggregateType)
+                                    .Add(partitionKey)
+                                    .Build()));
                     }
                 }
 
@@ -234,9 +223,7 @@ public class CosmosDbFactory(
         cosmosMemoryCache.Cache.Remove(GetMemoryCacheContainerKey(documentType, databaseId, containerId));
     }
 
-    private static IReadOnlyList<string> GetPartitionKeyPaths()
-    {
-        return ["/rootPartitionKey", "/aggregateGroup", "/partitionKey"];
-    }
+    private static IReadOnlyList<string> GetPartitionKeyPaths() =>
+        ["/rootPartitionKey", "/aggregateGroup", "/partitionKey"];
     // private static IReadOnlyList<string> GetPartitionKeyPaths() => ["/RootPartitionKey", "/AggregateGroup", "/PartitionKey"];
 }

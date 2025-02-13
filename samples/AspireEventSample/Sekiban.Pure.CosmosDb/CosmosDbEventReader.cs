@@ -6,7 +6,7 @@ using Sekiban.Pure.Events;
 using Sekiban.Pure.OrleansEventSourcing;
 namespace Sekiban.Pure.CosmosDb;
 
-public class CosmosDbEventReader(CosmosDbFactory dbFactory, DomainTypes domainTypes) : IEventReader
+public class CosmosDbEventReader(CosmosDbFactory dbFactory, SekibanDomainTypes sekibanDomainTypes) : IEventReader
 {
     private const int DefaultOptionsMax = -1;
 
@@ -129,7 +129,9 @@ public class CosmosDbEventReader(CosmosDbFactory dbFactory, DomainTypes domainTy
             // pick out one item
             if (string.IsNullOrWhiteSpace(item.PayloadTypeName)) continue;
 
-            var converted = domainTypes.EventTypes.DeserializeToTyped(item, dbFactory.GetJsonSerializerOptions());
+            var converted = sekibanDomainTypes.EventTypes.DeserializeToTyped(
+                item,
+                dbFactory.GetJsonSerializerOptions());
             if (converted.IsSuccess) events.Add(converted.GetValue());
             // var toAdd = (registeredEventTypes
             //                  .RegisteredTypes

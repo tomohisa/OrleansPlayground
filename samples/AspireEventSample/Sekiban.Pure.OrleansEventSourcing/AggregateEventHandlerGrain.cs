@@ -6,7 +6,7 @@ namespace Sekiban.Pure.OrleansEventSourcing;
 public class AggregateEventHandlerGrain(
     [PersistentState("aggregate", "Default")]
     IPersistentState<AggregateEventHandlerGrain.ToPersist> state,
-    DomainTypes domainTypes,
+    SekibanDomainTypes sekibanDomainTypes,
     IEventWriter eventWriter,
     IEventReader eventReader) : Grain, IAggregateEventHandlerGrain
 {
@@ -18,7 +18,7 @@ public class AggregateEventHandlerGrain(
     )
     {
         var streamProvider = this.GetStreamProvider("EventStreamProvider");
-        var toStoreEvents = newEvents.ToList().ToEventsAndReplaceTime(domainTypes.EventTypes);
+        var toStoreEvents = newEvents.ToList().ToEventsAndReplaceTime(sekibanDomainTypes.EventTypes);
         if (string.IsNullOrWhiteSpace(expectedLastSortableUniqueId) &&
             _events.Count > 0 &&
             _events.Last().SortableUniqueId != expectedLastSortableUniqueId)

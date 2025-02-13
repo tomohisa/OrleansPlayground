@@ -14,5 +14,6 @@ public interface IMultiProjectorTypes
     }
 
     IMultiProjectorCommon GetProjectorFromMultiProjectorName(string grainName);
+    ResultBox<string> GetMultiProjectorNameFromMultiProjector(IMultiProjectorCommon multiProjector);
     IMultiProjectorStateCommon ToTypedState(MultiProjectionState state);
 }

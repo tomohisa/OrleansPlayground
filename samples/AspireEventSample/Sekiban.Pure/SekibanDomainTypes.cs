@@ -6,9 +6,9 @@ using Sekiban.Pure.Serialize;
 using System.Text.Json;
 namespace Sekiban.Pure;
 
-public record DomainTypes
+public record SekibanDomainTypes
 {
-    public DomainTypes(
+    public SekibanDomainTypes(
         IEventTypes eventTypes,
         IAggregateTypes aggregateTypes,
         IAggregateProjectorSpecifier aggregateProjectorSpecifier,
