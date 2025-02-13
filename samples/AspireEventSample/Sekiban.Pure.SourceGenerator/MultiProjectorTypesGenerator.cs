@@ -126,27 +126,28 @@ public class MultiProjectorTypesGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace {rootNamespace}.Generated");
         sb.AppendLine("{");
-        sb.AppendLine($"    public class {rootNamespace.Replace(".", "")}MultiProjectorType : IMultiProjectorsType");
+        sb.AppendLine($"    public class {rootNamespace.Replace(".", "")}MultiProjectorTypes : IMultiProjectorTypes");
         sb.AppendLine("    {");
         sb.AppendLine(
             "        public ResultBox<IMultiProjectorCommon> Project(IMultiProjectorCommon multiProjector, IEvent ev)");
         sb.AppendLine("            => multiProjector switch");
         sb.AppendLine("            {");
 
-foreach (var type in multiProjectorTypes)
-{
-    sb.AppendLine(
-        $"                {type.TypeName} {type.TypeName.Split('.').Last().ToCamelCase()} => {type.TypeName.Split('.').Last().ToCamelCase()}.Project({type.TypeName.Split('.').Last().ToCamelCase()}, ev)");
-    sb.AppendLine("                    .Remap(mp => (IMultiProjectorCommon)mp),");
-}
-foreach (var type in aggregateProjectorTypes)
-{
-    var className = type.RecordName.Split('.').Last().ToCamelCase();
-    sb.AppendLine($"                AggregateListProjector<{type.RecordName}> {className} => {className}.Project({className}, ev)");
-    sb.AppendLine("                    .Remap(mp => (IMultiProjectorCommon)mp),");
-}
+        foreach (var type in multiProjectorTypes)
+        {
+            sb.AppendLine(
+                $"                {type.TypeName} {type.TypeName.Split('.').Last().ToCamelCase()} => {type.TypeName.Split('.').Last().ToCamelCase()}.Project({type.TypeName.Split('.').Last().ToCamelCase()}, ev)");
+            sb.AppendLine("                    .Remap(mp => (IMultiProjectorCommon)mp),");
+        }
+        foreach (var type in aggregateProjectorTypes)
+        {
+            var className = type.RecordName.Split('.').Last().ToCamelCase();
+            sb.AppendLine(
+                $"                AggregateListProjector<{type.RecordName}> {className} => {className}.Project({className}, ev)");
+            sb.AppendLine("                    .Remap(mp => (IMultiProjectorCommon)mp),");
+        }
 
-sb.AppendLine("                _ => new ApplicationException(multiProjector.GetType().Name)");
+        sb.AppendLine("                _ => new ApplicationException(multiProjector.GetType().Name)");
         sb.AppendLine("            };");
         sb.AppendLine();
         sb.AppendLine(
@@ -157,20 +158,21 @@ sb.AppendLine("                _ => new ApplicationException(multiProjector.GetT
         sb.AppendLine("            => state.ProjectorCommon switch");
         sb.AppendLine("            {");
 
-foreach (var type in multiProjectorTypes)
-{
-    var className = type.TypeName.Split('.').Last();
-    sb.AppendLine(
-        $"                {type.TypeName} projector => new MultiProjectionState<{type.TypeName}>(projector, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
-}
-foreach (var type in aggregateProjectorTypes)
-{
-    sb.AppendLine($"                AggregateListProjector<{type.RecordName}> aggregator => new MultiProjectionState<AggregateListProjector<{type.RecordName}>>(aggregator, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
-}
+        foreach (var type in multiProjectorTypes)
+        {
+            var className = type.TypeName.Split('.').Last();
+            sb.AppendLine(
+                $"                {type.TypeName} projector => new MultiProjectionState<{type.TypeName}>(projector, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
+        }
+        foreach (var type in aggregateProjectorTypes)
+        {
+            sb.AppendLine(
+                $"                AggregateListProjector<{type.RecordName}> aggregator => new MultiProjectionState<AggregateListProjector<{type.RecordName}>>(aggregator, state.LastEventId, state.LastSortableUniqueId, state.Version, state.AppliedSnapshotVersion, state.RootPartitionKey),");
+        }
 
-sb.AppendLine(
-    "                _ => throw new ArgumentException($\"No state type found for projector type: {state.ProjectorCommon.GetType().Name}\")");
-sb.AppendLine("            };");
+        sb.AppendLine(
+            "                _ => throw new ArgumentException($\"No state type found for projector type: {state.ProjectorCommon.GetType().Name}\")");
+        sb.AppendLine("            };");
         sb.AppendLine();
         sb.AppendLine("        public IMultiProjectorCommon GetProjectorFromMultiProjectorName(string grainName)");
         sb.AppendLine("            => grainName switch");

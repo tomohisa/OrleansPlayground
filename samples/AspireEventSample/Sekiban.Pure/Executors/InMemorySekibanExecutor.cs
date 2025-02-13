@@ -10,13 +10,11 @@ using Sekiban.Pure.Repositories;
 namespace Sekiban.Pure.Executors;
 
 public class InMemorySekibanExecutor(
-    IEventTypes eventTypes,
-    ICommandMetadataProvider metadataProvider,
-    IQueryTypes queryTypes,
-    IMultiProjectorsType multiProjectorsType) : ISekibanExecutor
+    DomainTypes domainTypes,
+    ICommandMetadataProvider metadataProvider) : ISekibanExecutor
 {
     private readonly CommandExecutor _commandExecutor = new()
-        { EventTypes = eventTypes };
+        { EventTypes = domainTypes.EventTypes };
 
     public async Task<ResultBox<CommandResponse>> ExecuteCommandAsync(
         ICommandWithHandlerSerializable command,
@@ -37,14 +35,14 @@ public class InMemorySekibanExecutor(
     public async Task<ResultBox<TResult>> ExecuteQueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
         where TResult : notnull
     {
-        var projectorResult = queryTypes.GetMultiProjector(queryCommon);
+        var projectorResult = domainTypes.QueryTypes.GetMultiProjector(queryCommon);
         if (projectorResult.IsSuccess)
         {
             var projector = projectorResult.GetValue();
             var events = Repository.Events;
             var projectionResult = events
                 .ToResultBox()
-                .ReduceEach(projector, (ev, proj) => multiProjectorsType.Project(proj, ev));
+                .ReduceEach(projector, (ev, proj) => domainTypes.MultiProjectorsType.Project(proj, ev));
             if (projectionResult.IsSuccess)
             {
                 var projection = projectionResult.GetValue();
@@ -56,9 +54,9 @@ public class InMemorySekibanExecutor(
                     events.Count,
                     0,
                     lastEvent?.PartitionKeys.RootPartitionKey ?? "default");
-                var typedMultiProjectionState = multiProjectorsType.ToTypedState(multiProjectionState);
+                var typedMultiProjectionState = domainTypes.MultiProjectorsType.ToTypedState(multiProjectionState);
                 var queryExecutor = new QueryExecutor();
-                var queryResult = await queryTypes.ExecuteAsQueryResult(
+                var queryResult = await domainTypes.QueryTypes.ExecuteAsQueryResult(
                     queryCommon,
                     selector => typedMultiProjectionState
                         .ToResultBox()
@@ -74,14 +72,14 @@ public class InMemorySekibanExecutor(
         IListQueryCommon<TResult> queryCommon)
         where TResult : notnull
     {
-        var projectorResult = queryTypes.GetMultiProjector(queryCommon);
+        var projectorResult = domainTypes.QueryTypes.GetMultiProjector(queryCommon);
         if (projectorResult.IsSuccess)
         {
             var projector = projectorResult.GetValue();
             var events = Repository.Events;
             var projectionResult = events
                 .ToResultBox()
-                .ReduceEach(projector, (ev, proj) => multiProjectorsType.Project(proj, ev));
+                .ReduceEach(projector, (ev, proj) => domainTypes.MultiProjectorsType.Project(proj, ev));
             if (projectionResult.IsSuccess)
             {
                 var projection = projectionResult.GetValue();
@@ -93,9 +91,9 @@ public class InMemorySekibanExecutor(
                     events.Count,
                     0,
                     lastEvent?.PartitionKeys.RootPartitionKey ?? "default");
-                var typedMultiProjectionState = multiProjectorsType.ToTypedState(multiProjectionState);
+                var typedMultiProjectionState = domainTypes.MultiProjectorsType.ToTypedState(multiProjectionState);
                 var queryExecutor = new QueryExecutor();
-                var queryResult = await queryTypes.ExecuteAsQueryResult(
+                var queryResult = await domainTypes.QueryTypes.ExecuteAsQueryResult(
                     queryCommon,
                     selector => typedMultiProjectionState
                         .ToResultBox()
