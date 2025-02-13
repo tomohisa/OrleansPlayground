@@ -148,13 +148,11 @@ apiRoute
         "/branch/{branchId}",
         (
             [FromRoute] Guid branchId,
-            [FromServices] SekibanOrleansExecutor executor) => Task.FromResult(
-            executor
-                .LoadAggregateAsync<BranchProjector>(
-                    PartitionKeys<BranchProjector>.Existing(branchId))
-                .Conveyor(aggregate => executor.GetDomainTypes().AggregateTypes.ToTypedPayload(aggregate))
-                .UnwrapBox()
-        )
+            [FromServices] SekibanOrleansExecutor executor) => executor
+            .LoadAggregateAsync<BranchProjector>(
+                PartitionKeys<BranchProjector>.Existing(branchId))
+            .Conveyor(aggregate => executor.GetDomainTypes().AggregateTypes.ToTypedPayload(aggregate))
+            .UnwrapBox()
     )
     .WithName("GetBranch")
     .WithOpenApi();

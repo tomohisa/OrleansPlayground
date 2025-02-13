@@ -50,7 +50,7 @@ public class SekibanOrleansExecutor(
         return sekibanDomainTypes
             .QueryTypes
             .ToTypedQueryResult(result.ToQueryResultGeneral())
-            .Remap(r => (TResult)r);
+            .Remap(r => (TResult)r.GetValue());
     }
     public async Task<ResultBox<ListQueryResult<TResult>>> ExecuteQueryAsync<TResult>(
         IListQueryCommon<TResult> queryCommon)
