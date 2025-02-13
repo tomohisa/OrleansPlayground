@@ -1,8 +1,7 @@
-using System.Text.Json.Serialization;
 using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.Carts;
 using Sekiban.Pure.Events;
-
+using System.Text.Json.Serialization;
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(EventDocumentCommon))]
 [JsonSerializable(typeof(EventDocumentCommon[]))]
