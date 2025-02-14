@@ -21,17 +21,20 @@ public class InMemorySekibanExecutor(
         ICommandWithHandlerSerializable command,
         IEvent? relatedEvent = null)
     {
-        var result = await _commandExecutor.ExecuteGeneralNonGeneric(
+        var partitionKeys = command.GetPartitionKeysSpecifier().DynamicInvoke() as PartitionKeys;
+        if (partitionKeys is null)
+        {
+            return ResultBox<CommandResponse>.Error(new ApplicationException("Partition keys not found"));
+        }
+        return await sekibanDomainTypes.CommandTypes.ExecuteGeneral(
+            _commandExecutor,
             command,
-            command.GetProjector(),
-            command.GetPartitionKeysSpecifier(),
-            null,
-            command.GetHandler(),
-            command.GetAggregatePayloadType(),
+            partitionKeys,
             relatedEvent is null
                 ? metadataProvider.GetMetadata()
-                : metadataProvider.GetMetadataWithSubscribedEvent(relatedEvent));
-        return result;
+                : metadataProvider.GetMetadataWithSubscribedEvent(relatedEvent),
+            (pk, pj) => Repository.Load(pk, pj).ToTask(),
+            (_, events) => Repository.Save(events).ToTask());
     }
     public async Task<ResultBox<TResult>> ExecuteQueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
         where TResult : notnull
