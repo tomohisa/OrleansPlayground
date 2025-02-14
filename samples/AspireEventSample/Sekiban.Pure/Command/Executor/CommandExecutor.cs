@@ -14,6 +14,7 @@ namespace Sekiban.Pure.Command.Executor;
 public class CommandExecutor
 {
     public IEventTypes EventTypes { get; init; } = new EmptyEventTypes();
+    public Repository Repository { get; init; } = new();
 
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(CommandExecutor))]
     public Task<ResultBox<CommandResponse>> ExecuteGeneral<TCommand, TInject, TAggregatePayload>(

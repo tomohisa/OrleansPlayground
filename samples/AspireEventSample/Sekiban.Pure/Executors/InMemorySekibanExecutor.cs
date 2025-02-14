@@ -11,7 +11,8 @@ namespace Sekiban.Pure.Executors;
 
 public class InMemorySekibanExecutor(
     SekibanDomainTypes sekibanDomainTypes,
-    ICommandMetadataProvider metadataProvider) : ISekibanExecutor
+    ICommandMetadataProvider metadataProvider,
+    Repository repository) : ISekibanExecutor
 {
     private readonly CommandExecutor _commandExecutor = new()
         { EventTypes = sekibanDomainTypes.EventTypes };
@@ -21,7 +22,7 @@ public class InMemorySekibanExecutor(
         ICommandWithHandlerSerializable command,
         IEvent? relatedEvent = null)
     {
-        var partitionKeys = command.GetPartitionKeysSpecifier().DynamicInvoke() as PartitionKeys;
+        var partitionKeys = command.GetPartitionKeysSpecifier().DynamicInvoke(command) as PartitionKeys;
         if (partitionKeys is null)
         {
             return ResultBox<CommandResponse>.Error(new ApplicationException("Partition keys not found"));
@@ -33,8 +34,8 @@ public class InMemorySekibanExecutor(
             relatedEvent is null
                 ? metadataProvider.GetMetadata()
                 : metadataProvider.GetMetadataWithSubscribedEvent(relatedEvent),
-            (pk, pj) => Repository.Load(pk, pj).ToTask(),
-            (_, events) => Repository.Save(events).ToTask());
+            (pk, pj) => repository.Load(pk, pj).ToTask(),
+            (_, events) => repository.Save(events).ToTask());
     }
     public async Task<ResultBox<TResult>> ExecuteQueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
         where TResult : notnull
@@ -43,7 +44,7 @@ public class InMemorySekibanExecutor(
         if (projectorResult.IsSuccess)
         {
             var projector = projectorResult.GetValue();
-            var events = Repository.Events;
+            var events = repository.Events;
             var projectionResult = events
                 .ToResultBox()
                 .ReduceEach(projector, (ev, proj) => sekibanDomainTypes.MultiProjectorsType.Project(proj, ev));
@@ -81,7 +82,7 @@ public class InMemorySekibanExecutor(
         if (projectorResult.IsSuccess)
         {
             var projector = projectorResult.GetValue();
-            var events = Repository.Events;
+            var events = repository.Events;
             var projectionResult = events
                 .ToResultBox()
                 .ReduceEach(projector, (ev, proj) => sekibanDomainTypes.MultiProjectorsType.Project(proj, ev));
@@ -114,7 +115,7 @@ public class InMemorySekibanExecutor(
     public Task<ResultBox<Aggregate>> LoadAggregateAsync<TAggregateProjector>(PartitionKeys partitionKeys)
         where TAggregateProjector : IAggregateProjector, new()
     {
-        var events = Repository.Events.Where(x => x.PartitionKeys == partitionKeys).ToList();
+        var events = repository.Events.Where(x => x.PartitionKeys == partitionKeys).ToList();
         return Aggregate.EmptyFromPartitionKeys(partitionKeys).Project(events, new TAggregateProjector()).ToTask();
     }
 }
