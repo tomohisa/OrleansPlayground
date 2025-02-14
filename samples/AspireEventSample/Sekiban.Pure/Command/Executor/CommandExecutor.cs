@@ -11,7 +11,7 @@ using Sekiban.Pure.Validations;
 using System.Diagnostics.CodeAnalysis;
 namespace Sekiban.Pure.Command.Executor;
 
-public class CommandExecutor : ICommandExecutor
+public class CommandExecutor
 {
     public IEventTypes EventTypes { get; init; } = new EmptyEventTypes();
 
