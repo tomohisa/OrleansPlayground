@@ -12,10 +12,10 @@ namespace Sekiban.Pure.Executors;
 public class InMemorySekibanExecutor(
     SekibanDomainTypes sekibanDomainTypes,
     ICommandMetadataProvider metadataProvider,
-    Repository repository) : ISekibanExecutor
+    Repository repository, IServiceProvider serviceProvider) : ISekibanExecutor
 {
     public Repository Repository { get; set; } = repository;
-    private readonly CommandExecutor _commandExecutor = new() { EventTypes = sekibanDomainTypes.EventTypes };
+    private readonly CommandExecutor _commandExecutor = new(serviceProvider) { EventTypes = sekibanDomainTypes.EventTypes };
 
     public SekibanDomainTypes GetDomainTypes() => sekibanDomainTypes;
     public async Task<ResultBox<CommandResponse>> ExecuteCommandAsync(

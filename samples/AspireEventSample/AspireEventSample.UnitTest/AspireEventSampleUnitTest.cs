@@ -1,6 +1,7 @@
 ﻿using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Projections;
+using Microsoft.Extensions.DependencyInjection;
 using Sekiban.Pure;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
@@ -27,7 +28,7 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task RegisterBranchTest()
     {
-        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository());
+        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository(), new ServiceCollection().BuildServiceProvider());
 
         var result1 = await executor.ExecuteCommandAsync(new RegisterBranch("DDD"));
         Assert.True(result1.IsSuccess);
@@ -41,7 +42,7 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task SimpleBranchListQueryTest()
     {
-        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository());
+        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository(), new ServiceCollection().BuildServiceProvider());
 
         // Register a branch to generate events
         var commandResult = await executor.ExecuteCommandAsync(new RegisterBranch("TestList"));
@@ -55,7 +56,7 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task LoadAggregateTest()
     {
-        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository());
+        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository(), new ServiceCollection().BuildServiceProvider());
 
         // Register a branch to generate events
         var commandResult = await executor.ExecuteCommandAsync(new RegisterBranch("TestLoad"));
