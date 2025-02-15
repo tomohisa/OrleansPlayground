@@ -12,7 +12,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspireEventSample.Web", "As
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure", "Sekiban.Pure\Sekiban.Pure.csproj", "{46DE4229-C79B-4A11-BA8F-42E2777ED9E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.OrleansEventSourcing", "Sekiban.Pure.OrleansEventSourcing\Sekiban.Pure.OrleansEventSourcing.csproj", "{CD794286-93A1-47E7-A23C-9E9691059A74}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Orleans", "Sekiban.Pure.Orleans\Sekiban.Pure.Orleans.csproj", "{CD794286-93A1-47E7-A23C-9E9691059A74}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.SourceGenerator", "Sekiban.Pure.SourceGenerator\Sekiban.Pure.SourceGenerator.csproj", "{F8554D19-89FD-43CD-8481-902AE94E219F}"
 EndProject
@@ -31,6 +31,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.NUnit", "Sekiban.Pure.NUnit\Sekiban.Pure.NUnit.csproj", "{C8F11FAA-FCAF-42F9-8EEF-5C8120097FC6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspireEventSample.NUnitTest", "AspireEventSample.NUnitTest\AspireEventSample.NUnitTest.csproj", "{3B134D75-1000-4F0B-B293-5D06D2B32A73}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Orleans.NUnit", "Sekiban.Pure.Orleans.NUnit\Sekiban.Pure.Orleans.NUnit.csproj", "{8A6346B7-5146-4202-8DAA-2F114386B93F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -98,6 +100,10 @@ Global
 		{3B134D75-1000-4F0B-B293-5D06D2B32A73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B134D75-1000-4F0B-B293-5D06D2B32A73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B134D75-1000-4F0B-B293-5D06D2B32A73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A6346B7-5146-4202-8DAA-2F114386B93F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A6346B7-5146-4202-8DAA-2F114386B93F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A6346B7-5146-4202-8DAA-2F114386B93F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A6346B7-5146-4202-8DAA-2F114386B93F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,7 +10,7 @@
     <ItemGroup>
         <ProjectReference Include="..\AspireEventSample.ServiceDefaults\AspireEventSample.ServiceDefaults.csproj"/>
         <ProjectReference Include="..\Sekiban.Pure.CosmosDb\Sekiban.Pure.CosmosDb.csproj"/>
-        <ProjectReference Include="..\Sekiban.Pure.OrleansEventSourcing\Sekiban.Pure.OrleansEventSourcing.csproj"/>
+        <ProjectReference Include="..\Sekiban.Pure.Orleans\Sekiban.Pure.Orleans.csproj"/>
         <ProjectReference Include="..\Sekiban.Pure.Postgres\Sekiban.Pure.Postgres.csproj"/>
         <ProjectReference Include="..\Sekiban.Pure.SourceGenerator\Sekiban.Pure.SourceGenerator.csproj">
             <OutputItemType>Analyzer</OutputItemType>
