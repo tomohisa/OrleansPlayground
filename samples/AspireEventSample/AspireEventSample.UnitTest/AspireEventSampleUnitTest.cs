@@ -28,9 +28,13 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task RegisterBranchTest()
     {
-        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository(), new ServiceCollection().BuildServiceProvider());
+        var executor = new InMemorySekibanExecutor(
+            SekibanDomainTypes,
+            CommandMetadataProvider,
+            new Repository(),
+            new ServiceCollection().BuildServiceProvider());
 
-        var result1 = await executor.ExecuteCommandAsync(new RegisterBranch("DDD"));
+        var result1 = await executor.CommandAsync(new RegisterBranch("DDD"));
         Assert.True(result1.IsSuccess);
         var value = result1.GetValue();
         Assert.NotNull(value);
@@ -42,24 +46,32 @@ public class AspireEventSampleUnitTest
     [Fact]
     public async Task SimpleBranchListQueryTest()
     {
-        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository(), new ServiceCollection().BuildServiceProvider());
+        var executor = new InMemorySekibanExecutor(
+            SekibanDomainTypes,
+            CommandMetadataProvider,
+            new Repository(),
+            new ServiceCollection().BuildServiceProvider());
 
         // Register a branch to generate events
-        var commandResult = await executor.ExecuteCommandAsync(new RegisterBranch("TestList"));
+        var commandResult = await executor.CommandAsync(new RegisterBranch("TestList"));
         Assert.True(commandResult.IsSuccess, "RegisterBranch command should succeed");
 
         var listQuery = new SimpleBranchListQuery("TestList");
-        var queryResult = await executor.ExecuteQueryAsync(listQuery);
+        var queryResult = await executor.QueryAsync(listQuery);
         Assert.True(queryResult.IsSuccess, "List query execution should be successful");
     }
 
     [Fact]
     public async Task LoadAggregateTest()
     {
-        var executor = new InMemorySekibanExecutor(SekibanDomainTypes, CommandMetadataProvider, new Repository(), new ServiceCollection().BuildServiceProvider());
+        var executor = new InMemorySekibanExecutor(
+            SekibanDomainTypes,
+            CommandMetadataProvider,
+            new Repository(),
+            new ServiceCollection().BuildServiceProvider());
 
         // Register a branch to generate events
-        var commandResult = await executor.ExecuteCommandAsync(new RegisterBranch("TestLoad"));
+        var commandResult = await executor.CommandAsync(new RegisterBranch("TestLoad"));
         Assert.True(commandResult.IsSuccess, "RegisterBranch command should succeed");
 
         var aggregateId = commandResult.GetValue().PartitionKeys.AggregateId;

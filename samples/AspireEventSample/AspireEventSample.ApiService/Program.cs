@@ -130,7 +130,7 @@ apiRoute
         "/registerbranch",
         async (
             [FromBody] RegisterBranch command,
-            [FromServices] SekibanOrleansExecutor executor) => await executor.ExecuteCommandAsync(command).UnwrapBox())
+            [FromServices] SekibanOrleansExecutor executor) => await executor.CommandAsync(command).UnwrapBox())
     .WithName("RegisterBranch")
     .WithOpenApi();
 apiRoute
@@ -138,7 +138,7 @@ apiRoute
         "/changebranchname",
         async (
             [FromBody] ChangeBranchName command,
-            [FromServices] SekibanOrleansExecutor executor) => await executor.ExecuteCommandAsync(command).UnwrapBox())
+            [FromServices] SekibanOrleansExecutor executor) => await executor.CommandAsync(command).UnwrapBox())
     .WithName("ChangeBranchName")
     .WithOpenApi();
 
@@ -180,7 +180,7 @@ apiRoute
         (
                 [FromRoute] string nameContains,
                 [FromServices] SekibanOrleansExecutor executor) =>
-            executor.ExecuteQueryAsync(new BranchExistsQuery(nameContains)).UnwrapBox())
+            executor.QueryAsync(new BranchExistsQuery(nameContains)).UnwrapBox())
     .WithName("BranchExists")
     .WithOpenApi();
 
@@ -190,7 +190,7 @@ apiRoute
         (
                 [FromQuery] string nameContains,
                 [FromServices] SekibanOrleansExecutor executor) =>
-            executor.ExecuteQueryAsync(new SimpleBranchListQuery(nameContains)).UnwrapBox())
+            executor.QueryAsync(new SimpleBranchListQuery(nameContains)).UnwrapBox())
     .WithName("SearchBranches")
     .WithOpenApi();
 apiRoute
@@ -199,7 +199,7 @@ apiRoute
         (
                 [FromQuery] string nameContains,
                 [FromServices] SekibanOrleansExecutor executor) =>
-            executor.ExecuteQueryAsync(new BranchQueryFromAggregateList(nameContains)).UnwrapBox())
+            executor.QueryAsync(new BranchQueryFromAggregateList(nameContains)).UnwrapBox())
     .WithName("SearchBranches2")
     .WithOpenApi();
 
