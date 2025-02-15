@@ -16,7 +16,7 @@ public class SekibanOrleansExecutor(
 {
 
     public SekibanDomainTypes GetDomainTypes() => sekibanDomainTypes;
-    public async Task<ResultBox<CommandResponse>> ExecuteCommandAsync(
+    public async Task<ResultBox<CommandResponse>> CommandAsync(
         ICommandWithHandlerSerializable command,
         IEvent? relatedEvent = null)
     {
@@ -33,7 +33,7 @@ public class SekibanOrleansExecutor(
             OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
         return toReturn.ToCommandResponse(sekibanDomainTypes.EventTypes);
     }
-    public async Task<ResultBox<TResult>> ExecuteQueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
+    public async Task<ResultBox<TResult>> QueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
         where TResult : notnull
     {
         var projectorResult = sekibanDomainTypes.QueryTypes.GetMultiProjector(queryCommon);
@@ -52,7 +52,7 @@ public class SekibanOrleansExecutor(
             .ToTypedQueryResult(result.ToQueryResultGeneral())
             .Remap(r => (TResult)r.GetValue());
     }
-    public async Task<ResultBox<ListQueryResult<TResult>>> ExecuteQueryAsync<TResult>(
+    public async Task<ResultBox<ListQueryResult<TResult>>> QueryAsync<TResult>(
         IListQueryCommon<TResult> queryCommon)
     {
         var projectorResult = sekibanDomainTypes.QueryTypes.GetMultiProjector(queryCommon);
