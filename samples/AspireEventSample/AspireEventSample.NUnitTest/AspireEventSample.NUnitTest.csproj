@@ -23,6 +23,7 @@
     <ItemGroup>
         <ProjectReference Include="..\AspireEventSample.ApiService\AspireEventSample.ApiService.csproj"/>
         <ProjectReference Include="..\Sekiban.Pure.NUnit\Sekiban.Pure.NUnit.csproj"/>
+        <ProjectReference Include="..\Sekiban.Pure.Orleans.NUnit\Sekiban.Pure.Orleans.NUnit.csproj"/>
     </ItemGroup>
 
 </Project>

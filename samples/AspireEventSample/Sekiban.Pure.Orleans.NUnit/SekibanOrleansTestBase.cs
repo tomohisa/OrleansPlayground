@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
 using Orleans.TestingHost;
 using ResultBoxes;
@@ -13,38 +12,13 @@ using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
 namespace Sekiban.Pure.Orleans.NUnit;
 
-public class TestSiloConfigurator : ISiloConfigurator
-{
-    public void Configure(ISiloBuilder siloBuilder)
-    {
-        siloBuilder.AddMemoryGrainStorage("PubSubStore");
-        siloBuilder.AddMemoryGrainStorageAsDefault();
-        siloBuilder.ConfigureServices(
-            services =>
-            {
-                services.AddSekibanOrleansCore();
-            });
-    }
-}
-public class TestClientConfigurator : IClientBuilderConfigurator
-{
-    public void Configure(IConfiguration configuration, IClientBuilder clientBuilder)
-    {
-        clientBuilder.ConfigureServices(
-            services =>
-            {
-                services.AddSekibanOrleansClient();
-            });
-    }
-}
 [TestFixture]
-public abstract class SekibanOrleansTestBase
+public abstract class SekibanOrleansTestBase<TDomainTypesGetter> where TDomainTypesGetter : IDomainTypesGetter, new()
 {
     /// <summary>
     ///     Each test case implements domain types through this abstract property
     /// </summary>
-    private SekibanDomainTypes DomainTypes => GetDomainTypes();
-    protected abstract SekibanDomainTypes GetDomainTypes();
+    private readonly SekibanDomainTypes _domainTypes = new TDomainTypesGetter().GetDomainTypes();
 
     private ICommandMetadataProvider _commandMetadataProvider;
     private IServiceProvider _serviceProvider;
@@ -55,14 +29,13 @@ public abstract class SekibanOrleansTestBase
     public virtual void SetUp()
     {
         _commandMetadataProvider = new FunctionCommandMetadataProvider(() => "test");
-        var builder = new TestClusterBuilder()
-            .AddSiloBuilderConfigurator<TestSiloConfigurator>()
-            .AddClientBuilderConfigurator<TestClientConfigurator>();
+        var builder = new TestClusterBuilder();
+        builder.AddSiloBuilderConfigurator<TestSiloConfigurator<TDomainTypesGetter>>();
         _cluster = builder.Build();
         _cluster.Deploy();
 
         _serviceProvider = _cluster.ServiceProvider;
-        _executor = new SekibanOrleansExecutor(_cluster.Client, DomainTypes, _commandMetadataProvider);
+        _executor = new SekibanOrleansExecutor(_cluster.Client, _domainTypes, _commandMetadataProvider);
     }
 
     [TearDown]
@@ -101,11 +74,17 @@ public abstract class SekibanOrleansTestBase
         where TResult : notnull
         => _executor.QueryAsync(query);
 
-    protected Task<ResultBox<TMultiProjector>> ThenGetMultiProjector<TMultiProjector>()
+    protected async Task<ResultBox<TMultiProjector>> ThenGetMultiProjector<TMultiProjector>()
         where TMultiProjector : IMultiProjector<TMultiProjector>, new()
     {
         var projector
-            = _cluster.Client.GetGrain<IMultiProjectorGrain<TMultiProjector>>(typeof(TMultiProjector).FullName!);
-        return projector.Get();
+            = _cluster.Client.GetGrain<IMultiProjectorGrain>(TMultiProjector.GetMultiProjectorName());
+        var state = await projector.GetStateAsync();
+        var typed = _domainTypes.MultiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+        if (typed is MultiProjectionState<TMultiProjector> multiProjectionState)
+        {
+            return multiProjectionState.Payload;
+        }
+        return ResultBox<TMultiProjector>.Error(new ApplicationException("Invalid state"));
     }
 }
