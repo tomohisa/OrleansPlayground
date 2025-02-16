@@ -4,7 +4,7 @@ using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 public class OrleansRepository(IAggregateEventHandlerGrain eventHandlerGrain, PartitionKeys partitionKeys, IAggregateProjector projector, IEventTypes eventTypes, Aggregate aggregate)
 {

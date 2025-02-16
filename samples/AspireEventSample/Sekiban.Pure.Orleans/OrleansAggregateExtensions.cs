@@ -1,6 +1,6 @@
 using Sekiban.Pure.Aggregates;
 
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 public static class OrleansAggregateExtensions
 {

@@ -5,7 +5,7 @@
         <LangVersion>preview</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Sekiban.Pure.OrleansEventSourcing</RootNamespace>
+        <RootNamespace>Sekiban.Pure.Orleans</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

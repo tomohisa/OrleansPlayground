@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using ResultBoxes;
 
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 [GenerateSerializer]
 public record OrleansResultBox<TValue>(System.Exception? Exception,TValue? Value) where TValue : notnull

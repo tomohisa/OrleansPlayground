@@ -2,7 +2,7 @@ using ResultBoxes;
 using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 public class AggregateProjectorGrain(
     [PersistentState("aggregate", "Default")]

@@ -1,5 +1,5 @@
 using AspireEventSample.ApiService.Aggregates.ReadModel;
-using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Orleans;
 namespace AspireEventSample.ApiService.Grains;
 
 public interface ICartEntityWriter : IEntityWriter<CartEntity>, IGrainWithStringKey { }

@@ -7,7 +7,7 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Executors;
-using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Orleans;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
 namespace Sekiban.Pure.Orleans.NUnit;

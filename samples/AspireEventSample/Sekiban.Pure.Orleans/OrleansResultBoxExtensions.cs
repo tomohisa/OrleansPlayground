@@ -1,6 +1,6 @@
 using ResultBoxes;
 
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 public static class OrleansResultBoxExtensions
 {

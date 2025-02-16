@@ -1,4 +1,4 @@
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 [GenerateSerializer]
 public record OrleansCommand([property:Id(0)]string payload);

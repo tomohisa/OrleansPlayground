@@ -1,6 +1,6 @@
 using Sekiban.Pure.Projectors;
 
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 [GenerateSerializer]
 public record OrleansMultiProjectorState(

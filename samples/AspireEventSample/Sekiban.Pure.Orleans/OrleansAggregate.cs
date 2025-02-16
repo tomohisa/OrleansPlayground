@@ -2,7 +2,7 @@ using ResultBoxes;
 using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Exceptions;
 
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 [GenerateSerializer]
 public record OrleansAggregate<TAggregatePayload>(

@@ -1,6 +1,6 @@
 using Sekiban.Pure.Events;
 
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 [GenerateSerializer]
 public record OrleansEvent(

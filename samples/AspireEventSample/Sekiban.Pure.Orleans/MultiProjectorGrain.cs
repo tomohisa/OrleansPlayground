@@ -1,9 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using ResultBoxes;
 using Sekiban.Pure.Documents;
+using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 public class MultiProjectorGrain(
     [PersistentState("multiProjector", "Default")]

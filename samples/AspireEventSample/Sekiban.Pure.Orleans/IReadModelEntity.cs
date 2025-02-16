@@ -1,4 +1,4 @@
-namespace Sekiban.Pure.OrleansEventSourcing
+namespace Sekiban.Pure.Orleans
 {
     public interface IReadModelEntity
     {

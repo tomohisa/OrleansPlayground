@@ -1,6 +1,6 @@
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Events;
-namespace Sekiban.Pure.OrleansEventSourcing;
+namespace Sekiban.Pure.Orleans;
 
 public static class CommandResponseExtensions
 {

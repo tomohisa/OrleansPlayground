@@ -1,4 +1,4 @@
-using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Orleans;
 
 namespace AspireEventSample.ApiService.Aggregates.ReadModel;
 
