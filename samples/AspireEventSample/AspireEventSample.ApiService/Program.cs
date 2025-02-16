@@ -101,7 +101,7 @@ apiRoute
             var multiProjectorGrain
                 = clusterClient.GetGrain<IMultiProjectorGrain>(BranchMultiProjector.GetMultiProjectorName());
             var state = await multiProjectorGrain.GetStateAsync();
-            return sekibanDomainTypes.MultiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+            return sekibanDomainTypes.MultiProjectorsType.ToTypedState(state);
         })
     .WithName("GetMultiProjection")
     .WithOpenApi();
@@ -115,7 +115,7 @@ apiRoute
                 = clusterClient.GetGrain<IMultiProjectorGrain>(
                     AggregateListProjector<BranchProjector>.GetMultiProjectorName());
             var state = await multiProjectorGrain.GetStateAsync();
-            return sekibanDomainTypes.MultiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+            return sekibanDomainTypes.MultiProjectorsType.ToTypedState(state);
         })
     .WithName("branchProjectionWithAggregate")
     .WithDescription(

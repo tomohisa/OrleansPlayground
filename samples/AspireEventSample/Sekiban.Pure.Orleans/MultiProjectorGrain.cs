@@ -8,12 +8,12 @@ namespace Sekiban.Pure.Orleans;
 
 public class MultiProjectorGrain(
     [PersistentState("multiProjector", "Default")]
-    IPersistentState<OrleansMultiProjectorState> safeState,
+    IPersistentState<MultiProjectionState> safeState,
     IEventReader eventReader,
     SekibanDomainTypes sekibanDomainTypes) : Grain, IMultiProjectorGrain
 {
     private static readonly TimeSpan SafeStateTime = TimeSpan.FromSeconds(10);
-    private OrleansMultiProjectorState? UnsafeState { get; set; }
+    private MultiProjectionState? UnsafeState { get; set; }
 
     public async Task RebuildStateAsync()
     {
@@ -34,7 +34,7 @@ public class MultiProjectorGrain(
         if (lastEventSortableId.IsEarlierThan(safeTimeIdValue))
         {
             // All events are safe to persist
-            safeState.State = new OrleansMultiProjectorState(
+            safeState.State = new MultiProjectionState(
                 projectedState,
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
@@ -58,7 +58,7 @@ public class MultiProjectorGrain(
                 var lastSafeEvent = safeEvents[^1];
                 var safeProjectedState
                     = sekibanDomainTypes.MultiProjectorsType.Project(projector, safeEvents).UnwrapBox();
-                safeState.State = new OrleansMultiProjectorState(
+                safeState.State = new MultiProjectionState(
                     safeProjectedState,
                     lastSafeEvent.Id,
                     lastSafeEvent.SortableUniqueId,
@@ -69,7 +69,7 @@ public class MultiProjectorGrain(
             }
 
             // Set unsafe state with full projection
-            UnsafeState = new OrleansMultiProjectorState(
+            UnsafeState = new MultiProjectionState(
                 projectedState,
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
@@ -110,7 +110,7 @@ public class MultiProjectorGrain(
         if (lastEventSortableId.IsEarlierThan(safeTimeIdValue))
         {
             // All new events are safe to persist
-            safeState.State = new OrleansMultiProjectorState(
+            safeState.State = new MultiProjectionState(
                 projectedState,
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
@@ -137,7 +137,7 @@ public class MultiProjectorGrain(
                         .MultiProjectorsType
                         .Project(safeState.State.ProjectorCommon, safeEvents)
                         .UnwrapBox();
-                safeState.State = new OrleansMultiProjectorState(
+                safeState.State = new MultiProjectionState(
                     safeProjectedState,
                     lastSafeEvent.Id,
                     lastSafeEvent.SortableUniqueId,
@@ -148,7 +148,7 @@ public class MultiProjectorGrain(
             }
 
             // Set unsafe state with full projection
-            UnsafeState = new OrleansMultiProjectorState(
+            UnsafeState = new MultiProjectionState(
                 projectedState,
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
@@ -158,7 +158,7 @@ public class MultiProjectorGrain(
         }
     }
 
-    public async Task<OrleansMultiProjectorState> GetStateAsync()
+    public async Task<MultiProjectionState> GetStateAsync()
     {
         await BuildStateAsync();
         return UnsafeState ?? safeState.State;
@@ -179,7 +179,9 @@ public class MultiProjectorGrain(
 
     public async Task<OrleansListQueryResultGeneral> QueryAsync(IListQueryCommon query)
     {
-        var result = await sekibanDomainTypes.QueryTypes.ExecuteAsQueryResult(query, GetProjectorForQuery,
+        var result = await sekibanDomainTypes.QueryTypes.ExecuteAsQueryResult(
+                query,
+                GetProjectorForQuery,
                 new ServiceCollection().BuildServiceProvider()) ??
             throw new ApplicationException("Query not found");
         return result
@@ -192,8 +194,8 @@ public class MultiProjectorGrain(
         IMultiProjectionEventSelector multiProjectionEventSelector)
     {
         await BuildStateAsync();
-        return UnsafeState?.ToMultiProjectorState().ToResultBox<IMultiProjectorStateCommon>() ??
-            safeState?.State.ToMultiProjectorState().ToResultBox<IMultiProjectorStateCommon>() ??
+        return UnsafeState?.ToResultBox<IMultiProjectorStateCommon>() ??
+            safeState?.State.ToResultBox<IMultiProjectorStateCommon>() ??
             new ApplicationException("No state found");
     }
 

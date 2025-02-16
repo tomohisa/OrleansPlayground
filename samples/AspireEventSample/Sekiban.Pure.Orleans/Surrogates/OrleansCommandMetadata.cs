@@ -1,5 +1,5 @@
 using Sekiban.Pure.Command.Handlers;
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Surrogates;
 
 [GenerateSerializer]
 public record OrleansCommandMetadata([property:Id(0)]Guid CommandId, [property:Id(1)]string CausationId,
