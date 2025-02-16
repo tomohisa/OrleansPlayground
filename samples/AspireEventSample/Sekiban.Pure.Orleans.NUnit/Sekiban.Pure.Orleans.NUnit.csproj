@@ -8,7 +8,8 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
-        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="9.1.2" />
+        <PackageReference Include="Microsoft.Orleans.Serialization.SystemTextJson" Version="9.1.2"/>
+        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="9.1.2"/>
         <PackageReference Include="NUnit" Version="4.3.2"/>
     </ItemGroup>
 

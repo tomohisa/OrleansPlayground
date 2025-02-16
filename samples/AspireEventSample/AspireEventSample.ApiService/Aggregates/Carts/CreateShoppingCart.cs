@@ -4,7 +4,6 @@ using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
-
 namespace AspireEventSample.ApiService.Aggregates.Carts;
 
 public record CreateShoppingCart(Guid UserId) : ICommandWithHandlerAsync<CreateShoppingCart, ShoppingCartProjector>
