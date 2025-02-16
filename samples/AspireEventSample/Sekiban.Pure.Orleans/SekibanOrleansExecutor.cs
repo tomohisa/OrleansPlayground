@@ -79,6 +79,6 @@ public class SekibanOrleansExecutor(
         var aggregateProjectorGrain =
             clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
         var state = await aggregateProjectorGrain.GetStateAsync();
-        return state.ToAggregate();
+        return state;
     }
 }

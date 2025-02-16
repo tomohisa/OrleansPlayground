@@ -12,9 +12,9 @@ public class AggregateEventHandlerGrain(
 {
     private readonly List<IEvent> _events = new();
 
-    public async Task<IReadOnlyList<OrleansEvent>> AppendEventsAsync(
+    public async Task<IReadOnlyList<IEvent>> AppendEventsAsync(
         string expectedLastSortableUniqueId,
-        IReadOnlyList<OrleansEvent> newEvents
+        IReadOnlyList<IEvent> newEvents
     )
     {
         var streamProvider = this.GetStreamProvider("EventStreamProvider");
@@ -37,15 +37,15 @@ public class AggregateEventHandlerGrain(
         state.State = persist;
         await state.WriteStateAsync();
         _events.AddRange(toStoreEvents);
-        var orleansEvents = toStoreEvents.ToOrleansEvents();
+        var orleansEvents = toStoreEvents;
         if (toStoreEvents.Count != 0) await eventWriter.SaveEvents(toStoreEvents);
-        var stream = streamProvider.GetStream<OrleansEvent>(StreamId.Create("AllEvents", Guid.Empty));
+        var stream = streamProvider.GetStream<IEvent>(StreamId.Create("AllEvents", Guid.Empty));
         foreach (var ev in orleansEvents) await stream.OnNextAsync(ev);
         return await Task.FromResult(orleansEvents);
     }
 
 
-    public Task<IReadOnlyList<OrleansEvent>> GetDeltaEventsAsync(
+    public Task<IReadOnlyList<IEvent>> GetDeltaEventsAsync(
         string fromSortableUniqueId,
         int? limit = null
     )
@@ -53,18 +53,16 @@ public class AggregateEventHandlerGrain(
         var index = _events.FindIndex(e => e.SortableUniqueId == fromSortableUniqueId);
 
         if (index < 0)
-            return Task.FromResult<IReadOnlyList<OrleansEvent>>(new List<OrleansEvent>());
+            return Task.FromResult<IReadOnlyList<IEvent>>(new List<IEvent>());
 
-        return Task.FromResult<IReadOnlyList<OrleansEvent>>(
+        return Task.FromResult<IReadOnlyList<IEvent>>(
             _events
                 .Skip(index + 1)
                 .Take(limit ?? int.MaxValue)
-                .ToList()
-                .ToOrleansEvents()
                 .ToList());
     }
 
-    public async Task<IReadOnlyList<OrleansEvent>> GetAllEventsAsync()
+    public async Task<IReadOnlyList<IEvent>> GetAllEventsAsync()
     {
         var retrievalInfo = PartitionKeys
             .FromPrimaryKeysString(this.GetPrimaryKeyString())
@@ -72,7 +70,7 @@ public class AggregateEventHandlerGrain(
             .UnwrapBox();
 
         var events = await eventReader.GetEvents(retrievalInfo).UnwrapBox();
-        return events.ToList().ToOrleansEvents();
+        return events.ToList();
     }
 
     public Task<string> GetLastSortableUniqueIdAsync() => Task.FromResult(state.State.LastSortableUniqueId);

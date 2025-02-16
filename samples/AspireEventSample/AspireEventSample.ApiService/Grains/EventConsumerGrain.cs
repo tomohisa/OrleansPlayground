@@ -2,15 +2,17 @@ using Orleans.Streams;
 using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.Carts;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
+using Sekiban.Pure.Events;
 using Sekiban.Pure.Orleans;
+using Sekiban.Pure.Orleans.Surrogates;
 
 namespace AspireEventSample.ApiService.Grains;
 
 [ImplicitStreamSubscription("AllEvents")]
 public class EventConsumerGrain : Grain, IEventConsumerGrain
 {
-    private IAsyncStream<OrleansEvent>? _stream = null;
-    private StreamSubscriptionHandle<OrleansEvent>? _subscriptionHandle = null;
+    private IAsyncStream<IEvent>? _stream = null;
+    private StreamSubscriptionHandle<IEvent>? _subscriptionHandle = null;
 
     public Task OnErrorAsync(Exception ex)
     {
@@ -19,14 +21,14 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
     }
 
     // Stream completion handler
-    public async Task OnNextAsync(OrleansEvent item, StreamSequenceToken? token)
+    public async Task OnNextAsync(IEvent item, StreamSequenceToken? token)
     {
         Console.WriteLine($"[MyGrain] Received event: {item}");
         
         var targetId = item.PartitionKeys.AggregateId;
 
         // Handle Branch events
-        if (item.Payload is BranchCreated || item.Payload is BranchNameChanged)
+        if (item.GetPayload() is BranchCreated || item.GetPayload() is BranchNameChanged)
         {
             var branchEntityWriter = GrainFactory.GetGrain<IBranchEntityWriter>(item.PartitionKeys.RootPartitionKey);
             var existing = await branchEntityWriter.GetEntityByIdAsync(
@@ -35,7 +37,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                 targetId);
 
             // Create or update branch entity based on event type
-            if (item.Payload is BranchCreated created)
+            if (item.GetPayload() is BranchCreated created)
             {
                 var entity = new BranchEntity
                 {
@@ -49,7 +51,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                 };
                 await branchEntityWriter.AddOrUpdateEntityAsync(entity);
             }
-            else if (item.Payload is BranchNameChanged nameChanged && existing != null)
+            else if (item.GetPayload() is BranchNameChanged nameChanged && existing != null)
             {
                 var updated = existing with
                 {
@@ -61,7 +63,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
             }
         }
         // Handle Cart events
-        else if (item.Payload is ShoppingCartCreated || item.Payload is ShoppingCartItemAdded || item.Payload is ShoppingCartPaymentProcessed)
+        else if (item.GetPayload() is ShoppingCartCreated || item.GetPayload() is ShoppingCartItemAdded || item.GetPayload() is ShoppingCartPaymentProcessed)
         {
             var cartEntityWriter = GrainFactory.GetGrain<ICartEntityWriter>(item.PartitionKeys.RootPartitionKey);
             var existing = await cartEntityWriter.GetEntityByIdAsync(
@@ -69,7 +71,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                 item.PartitionKeys.Group,
                 targetId);
 
-            if (item.Payload is ShoppingCartCreated created)
+            if (item.GetPayload() is ShoppingCartCreated created)
             {
                 var entity = new CartEntity
                 {
@@ -86,7 +88,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                 };
                 await cartEntityWriter.AddOrUpdateEntityAsync(entity);
             }
-            else if (item.Payload is ShoppingCartItemAdded itemAdded && existing != null)
+            else if (item.GetPayload() is ShoppingCartItemAdded itemAdded && existing != null)
             {
                 var updatedItems = new List<ShoppingCartItems>(existing.Items)
                 {
@@ -103,7 +105,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
                 };
                 await cartEntityWriter.AddOrUpdateEntityAsync(updated);
             }
-            else if (item.Payload is ShoppingCartPaymentProcessed && existing != null)
+            else if (item.GetPayload() is ShoppingCartPaymentProcessed && existing != null)
             {
                 var updated = existing with
                 {
@@ -128,7 +130,7 @@ public class EventConsumerGrain : Grain, IEventConsumerGrain
         
         var streamProvider = this.GetStreamProvider("EventStreamProvider");
         
-        _stream = streamProvider.GetStream<OrleansEvent>(StreamId.Create("AllEvents", Guid.Empty));
+        _stream = streamProvider.GetStream<IEvent>(StreamId.Create("AllEvents", Guid.Empty));
         
         // Subscribe to the stream when this grain is activated
         _subscriptionHandle = await _stream.SubscribeAsync(

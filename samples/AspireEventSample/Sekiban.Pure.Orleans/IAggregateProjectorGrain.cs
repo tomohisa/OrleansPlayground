@@ -1,3 +1,4 @@
+using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
 namespace Sekiban.Pure.Orleans;
@@ -10,7 +11,7 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     ///     イベントを一括取得して再構築することを考慮。
     /// </summary>
     /// <returns>現在の集約状態</returns>
-    Task<OrleansAggregate> GetStateAsync();
+    Task<Aggregate> GetStateAsync();
 
     /// <summary>
     ///     コマンドを実行するエントリポイント。
@@ -26,5 +27,5 @@ public interface IAggregateProjectorGrain : IGrainWithStringKey
     ///     すべてのイベントを AggregateEventHandler から受け取り、Projector ロジックを通して再構成。
     /// </summary>
     /// <returns>再構築後の新しい状態</returns>
-    Task<OrleansAggregate> RebuildStateAsync();
+    Task<Aggregate> RebuildStateAsync();
 }
