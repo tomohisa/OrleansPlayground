@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Orleans.TestingHost;
 using ResultBoxes;
@@ -7,18 +8,21 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Executors;
-using Sekiban.Pure.Orleans;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
+using Sekiban.Pure.Repositories;
 namespace Sekiban.Pure.Orleans.NUnit;
 
 [TestFixture]
-public abstract class SekibanOrleansTestBase<TDomainTypesGetter> where TDomainTypesGetter : IDomainTypesGetter, new()
+public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigurator
+    where TDomainTypesGetter : ISiloConfigurator, new()
 {
     /// <summary>
     ///     Each test case implements domain types through this abstract property
     /// </summary>
-    private readonly SekibanDomainTypes _domainTypes = new TDomainTypesGetter().GetDomainTypes();
+    private SekibanDomainTypes _domainTypes => GetDomainTypes();
+
+    public abstract SekibanDomainTypes GetDomainTypes();
 
     private ICommandMetadataProvider _commandMetadataProvider;
     private IServiceProvider _serviceProvider;
@@ -30,7 +34,7 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> where TDomainTy
     {
         _commandMetadataProvider = new FunctionCommandMetadataProvider(() => "test");
         var builder = new TestClusterBuilder();
-        builder.AddSiloBuilderConfigurator<TestSiloConfigurator<TDomainTypesGetter>>();
+        builder.AddSiloBuilderConfigurator<TDomainTypesGetter>();
         _cluster = builder.Build();
         _cluster.Deploy();
 
@@ -86,5 +90,21 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> where TDomainTy
             return multiProjectionState.Payload;
         }
         return ResultBox<TMultiProjector>.Error(new ApplicationException("Invalid state"));
+    }
+    public virtual void Configure(ISiloBuilder siloBuilder)
+    {
+        var repository = new Repository();
+        siloBuilder.AddMemoryGrainStorage("PubSubStore");
+        siloBuilder.AddMemoryGrainStorageAsDefault();
+        siloBuilder.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
+        siloBuilder.ConfigureServices(
+            services =>
+            {
+                services.AddSingleton(_domainTypes);
+                services.AddSingleton(repository);
+                services.AddTransient<IEventWriter, InMemoryEventWriter>();
+                services.AddTransient<IEventReader, InMemoryEventReader>();
+                // services.AddTransient()
+            });
     }
 }
