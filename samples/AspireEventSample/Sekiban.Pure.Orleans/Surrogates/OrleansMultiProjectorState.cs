@@ -1,6 +1,5 @@
 using Sekiban.Pure.Projectors;
-
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Surrogates;
 
 [GenerateSerializer]
 public record OrleansMultiProjectorState(
@@ -11,10 +10,5 @@ public record OrleansMultiProjectorState(
     [property: Id(5)] int AppliedSnapshotVersion,
     [property: Id(6)] string RootPartitionKey)
 {
-    public MultiProjectionState ToMultiProjectorState()
-    {
-        return new MultiProjectionState(ProjectorCommon, LastEventId, LastSortableUniqueId, Version,
-            AppliedSnapshotVersion,
-            RootPartitionKey);
-    }
+
 }

@@ -1,3 +1,4 @@
+using Sekiban.Pure.Orleans.Surrogates;
 using Sekiban.Pure.Query;
 
 namespace Sekiban.Pure.Orleans;
