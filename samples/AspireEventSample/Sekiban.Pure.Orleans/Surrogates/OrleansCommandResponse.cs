@@ -1,4 +1,4 @@
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Surrogates;
 
 [GenerateSerializer]
 public record OrleansCommandResponse(
