@@ -2,7 +2,7 @@ using Sekiban.Pure.Projectors;
 namespace Sekiban.Pure.Orleans.Surrogates;
 
 [GenerateSerializer]
-public record OrleansMultiProjectorState(
+public record struct OrleansMultiProjectorState(
     [property: Id(1)] IMultiProjectorCommon ProjectorCommon,
     [property: Id(2)] Guid LastEventId,
     [property: Id(3)] string LastSortableUniqueId,

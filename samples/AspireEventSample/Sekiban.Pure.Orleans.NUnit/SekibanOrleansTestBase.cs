@@ -84,7 +84,7 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
         var projector
             = _cluster.Client.GetGrain<IMultiProjectorGrain>(TMultiProjector.GetMultiProjectorName());
         var state = await projector.GetStateAsync();
-        var typed = _domainTypes.MultiProjectorsType.ToTypedState(state.ToMultiProjectorState());
+        var typed = _domainTypes.MultiProjectorsType.ToTypedState(state);
         if (typed is MultiProjectionState<TMultiProjector> multiProjectionState)
         {
             return multiProjectionState.Payload;
