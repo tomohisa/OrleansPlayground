@@ -7,7 +7,8 @@ namespace Sekiban.Pure.Orleans;
 public class AggregateProjectorGrain(
     [PersistentState("aggregate", "Default")]
     IPersistentState<Aggregate> state,
-    SekibanDomainTypes sekibanDomainTypes, IServiceProvider serviceProvider) : Grain, IAggregateProjectorGrain
+    SekibanDomainTypes sekibanDomainTypes,
+    IServiceProvider serviceProvider) : Grain, IAggregateProjectorGrain
 {
     private OptionalValue<PartitionKeysAndProjector> _partitionKeysAndProjector
         = OptionalValue<PartitionKeysAndProjector>.Empty;
@@ -55,14 +56,14 @@ public class AggregateProjectorGrain(
             .UnwrapBox();
         return _partitionKeysAndProjector.GetValue();
     }
-    public async Task<OrleansAggregate> GetStateAsync()
+    public async Task<Aggregate> GetStateAsync()
     {
         await state.ReadStateAsync();
         var eventGrain
             = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(
                 GetPartitionKeysAndProjector().ToEventHandlerGrainKey());
         var read = await GetStateInternalAsync(eventGrain);
-        return read.ToOrleansAggregate();
+        return read;
     }
     private async Task<Aggregate> GetStateInternalAsync(IAggregateEventHandlerGrain eventHandlerGrain)
     {
@@ -81,7 +82,7 @@ public class AggregateProjectorGrain(
             var events = await eventHandlerGrain.GetDeltaEventsAsync(read.LastSortableUniqueId);
             read = read
                 .Project(
-                    events.ToList().ToEvents(sekibanDomainTypes.EventTypes),
+                    events.ToList(),
                     GetPartitionKeysAndProjector().Projector)
                 .UnwrapBox();
             UpdatedAfterWrite = true;
@@ -89,7 +90,7 @@ public class AggregateProjectorGrain(
         return read;
     }
 
-    public async Task<OrleansCommandResponse> ExecuteCommandAsync(
+    public async Task<CommandResponse> ExecuteCommandAsync(
         ICommandWithHandlerSerializable orleansCommand,
         OrleansCommandMetadata metadata)
     {
@@ -115,7 +116,7 @@ public class AggregateProjectorGrain(
             .UnwrapBox();
         state.State = orleansRepository.GetProjectedAggregate(result.Events).UnwrapBox();
         UpdatedAfterWrite = true;
-        return result.ToOrleansCommandResponse();
+        return result;
     }
 
     private async Task<Aggregate> RebuildStateInternalAsync()
@@ -135,9 +136,9 @@ public class AggregateProjectorGrain(
         return aggregate;
     }
 
-    public async Task<OrleansAggregate> RebuildStateAsync()
+    public async Task<Aggregate> RebuildStateAsync()
     {
         var aggregate = await RebuildStateInternalAsync();
-        return aggregate.ToOrleansAggregate();
+        return aggregate;
     }
 }

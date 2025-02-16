@@ -31,7 +31,7 @@ public class SekibanOrleansExecutor(
         var toReturn = await aggregateProjectorGrain.ExecuteCommandAsync(
             command,
             OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
-        return toReturn.ToCommandResponse(sekibanDomainTypes.EventTypes);
+        return toReturn;
     }
     public async Task<ResultBox<TResult>> QueryAsync<TResult>(IQueryCommon<TResult> queryCommon)
         where TResult : notnull
@@ -79,6 +79,6 @@ public class SekibanOrleansExecutor(
         var aggregateProjectorGrain =
             clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
         var state = await aggregateProjectorGrain.GetStateAsync();
-        return state.ToAggregate();
+        return state;
     }
 }

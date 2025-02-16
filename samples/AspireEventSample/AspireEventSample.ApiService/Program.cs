@@ -169,7 +169,7 @@ apiRoute
             var aggregateProjectorGrain =
                 clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
             var state = await aggregateProjectorGrain.RebuildStateAsync();
-            return sekibanTypes.AggregateTypes.ToTypedPayload(state.ToAggregate()).UnwrapBox();
+            return sekibanTypes.AggregateTypes.ToTypedPayload(state).UnwrapBox();
         })
     .WithName("GetBranchReload")
     .WithOpenApi();
