@@ -2,7 +2,7 @@ using Orleans.Streams;
 using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.Carts;
 using AspireEventSample.ApiService.Aggregates.ReadModel;
-using Sekiban.Pure.OrleansEventSourcing;
+using Sekiban.Pure.Orleans;
 
 namespace AspireEventSample.ApiService.Grains;
 
