@@ -183,16 +183,14 @@ public class MultiProjectorGrain(
             .UnwrapBox();
     }
 
-    public async Task<ListQueryResultGeneral> QueryAsync(IListQueryCommon query)
+    public async Task<IListQueryResult> QueryAsync(IListQueryCommon query)
     {
         var result = await sekibanDomainTypes.QueryTypes.ExecuteAsQueryResult(
                 query,
                 GetProjectorForQuery,
                 new ServiceCollection().BuildServiceProvider()) ??
             throw new ApplicationException("Query not found");
-        return result
-            .Remap(value => value.ToGeneral(query))
-            .UnwrapBox();
+        return result.UnwrapBox();
     }
 
     public async Task<ResultBox<IMultiProjectorStateCommon>> GetProjectorForQuery(
@@ -215,10 +213,6 @@ public class MultiProjectorGrain(
     {
         await base.OnActivateAsync(cancellationToken);
         await safeState.ReadStateAsync();
-        if (safeState.RecordExists == false)
-        {
-            await RebuildStateAsync();
-        }
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)

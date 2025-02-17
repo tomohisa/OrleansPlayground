@@ -81,7 +81,7 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
         => _executor.QueryAsync(query);
 
     protected async Task<ResultBox<TMultiProjector>> ThenGetMultiProjector<TMultiProjector>()
-        where TMultiProjector : IMultiProjector<TMultiProjector>, new()
+        where TMultiProjector : IMultiProjector<TMultiProjector>
     {
         var projector
             = _cluster.Client.GetGrain<IMultiProjectorGrain>(TMultiProjector.GetMultiProjectorName());

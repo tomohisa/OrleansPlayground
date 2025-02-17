@@ -63,10 +63,7 @@ public class SekibanOrleansExecutor(
         var multiProjectorGrain
             = clusterClient.GetGrain<IMultiProjectorGrain>(nameResult.GetValue());
         var result = await multiProjectorGrain.QueryAsync(queryCommon);
-        return sekibanDomainTypes
-            .QueryTypes
-            .ToTypedListQueryResult(result)
-            .Cast<IListQueryResult, ListQueryResult<TResult>>();
+        return result.ToResultBox().Cast<IListQueryResult, ListQueryResult<TResult>>();
     }
     public async Task<ResultBox<Aggregate>> LoadAggregateAsync<TAggregateProjector>(PartitionKeys partitionKeys)
         where TAggregateProjector : IAggregateProjector, new()

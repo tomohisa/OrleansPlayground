@@ -6,6 +6,7 @@ using Orleans.Serialization;
 using ResultBoxes;
 using Sekiban.Pure;
 using Sekiban.Pure.Orleans.NUnit;
+using Sekiban.Pure.Projectors;
 namespace AspireEventSample.NUnitTest;
 
 public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
@@ -16,9 +17,29 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
             .Conveyor(response => WhenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.That(response.Version, Is.EqualTo(2)))
+            .Do( // wait 10 second for the event to be processed
+                async _ =>
+                {
+                    await Task.Delay(10000);
+                })
             .Conveyor(response => ThenGetAggregate<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
             .Do(payload => Assert.That(payload.Name, Is.EqualTo("ES")))
+            .Conveyor(_ => ThenGetMultiProjector<BranchMultiProjector>())
+            .Do(
+                projector =>
+                {
+                    Assert.That(projector.Branches.Count, Is.EqualTo(1));
+                    Assert.That(projector.Branches.Values.First().BranchName, Is.EqualTo("ES"));
+                })
+            .Conveyor(_ => ThenGetMultiProjector<AggregateListProjector<BranchProjector>>())
+            .Do(
+                projector =>
+                {
+                    Assert.That(projector.Aggregates.Values.Count, Is.EqualTo(1));
+                    Assert.That(projector.Aggregates.Values.First().Payload, Is.TypeOf<Branch>());
+                    Assert.That(((Branch)projector.Aggregates.Values.First().Payload).Name, Is.EqualTo("ES"));
+                })
             .UnwrapBox();
 
     [Test]
