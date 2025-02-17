@@ -4,7 +4,7 @@ using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Grains;
 
 public class MultiProjectorGrain(
     [PersistentState("multiProjector", "Default")]

@@ -5,10 +5,9 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Executors;
-using Sekiban.Pure.Orleans.Surrogates;
 using Sekiban.Pure.Projectors;
 using Sekiban.Pure.Query;
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Parts;
 
 public class SekibanOrleansExecutor(
     IClusterClient clusterClient,
@@ -31,7 +30,7 @@ public class SekibanOrleansExecutor(
             clusterClient.GetGrain<IAggregateProjectorGrain>(partitionKeyAndProjector.ToProjectorGrainKey());
         var toReturn = await aggregateProjectorGrain.ExecuteCommandAsync(
             command,
-            OrleansCommandMetadata.FromCommandMetadata(metadataProvider.GetMetadata()));
+            metadataProvider.GetMetadata());
         return toReturn;
     }
     public async Task<ResultBox<TResult>> QueryAsync<TResult>(IQueryCommon<TResult> queryCommon)

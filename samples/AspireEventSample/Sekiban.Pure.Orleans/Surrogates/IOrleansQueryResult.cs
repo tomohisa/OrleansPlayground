@@ -1,3 +1,3 @@
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Surrogates;
 
 public interface IOrleansQueryResult;

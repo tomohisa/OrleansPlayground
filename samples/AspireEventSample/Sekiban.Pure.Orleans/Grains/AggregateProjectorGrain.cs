@@ -2,8 +2,8 @@ using ResultBoxes;
 using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Command.Executor;
 using Sekiban.Pure.Command.Handlers;
-using Sekiban.Pure.Orleans.Surrogates;
-namespace Sekiban.Pure.Orleans;
+using Sekiban.Pure.Orleans.Parts;
+namespace Sekiban.Pure.Orleans.Grains;
 
 public class AggregateProjectorGrain(
     [PersistentState("aggregate", "Default")]
@@ -93,7 +93,7 @@ public class AggregateProjectorGrain(
 
     public async Task<CommandResponse> ExecuteCommandAsync(
         ICommandWithHandlerSerializable orleansCommand,
-        OrleansCommandMetadata metadata)
+        CommandMetadata metadata)
     {
         var eventGrain
             = GrainFactory.GetGrain<IAggregateEventHandlerGrain>(
@@ -111,7 +111,7 @@ public class AggregateProjectorGrain(
                 commandExecutor,
                 orleansCommand,
                 GetPartitionKeysAndProjector().PartitionKeys,
-                metadata.ToCommandMetadata(),
+                metadata,
                 (_, _) => orleansRepository.GetAggregate(),
                 orleansRepository.Save)
             .UnwrapBox();

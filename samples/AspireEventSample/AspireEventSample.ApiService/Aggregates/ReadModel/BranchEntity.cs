@@ -1,9 +1,5 @@
-using Sekiban.Pure.Orleans;
-
+using Sekiban.Pure.Orleans.ReadModels;
 namespace AspireEventSample.ApiService.Aggregates.ReadModel;
-
-using Orleans.Serialization;
-using Sekiban.Pure.Documents;
 
 [GenerateSerializer]
 public record BranchEntity : IReadModelEntity

@@ -11,6 +11,7 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.CosmosDb;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Orleans;
+using Sekiban.Pure.Orleans.Parts;
 using Sekiban.Pure.Postgres;
 using Sekiban.Pure.Projectors;
 var builder = WebApplication.CreateBuilder(args);

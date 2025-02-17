@@ -1,6 +1,6 @@
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Parts;
 
 public static class OrleansEventExtensions
 {

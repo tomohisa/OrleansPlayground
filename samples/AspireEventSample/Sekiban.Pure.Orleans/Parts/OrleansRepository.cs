@@ -3,7 +3,7 @@ using Sekiban.Pure.Aggregates;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 using Sekiban.Pure.Projectors;
-namespace Sekiban.Pure.Orleans;
+namespace Sekiban.Pure.Orleans.Parts;
 
 public class OrleansRepository(
     IAggregateEventHandlerGrain eventHandlerGrain,
