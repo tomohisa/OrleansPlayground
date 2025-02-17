@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspireEventSample.NUnitTest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Orleans.NUnit", "Sekiban.Pure.Orleans.NUnit\Sekiban.Pure.Orleans.NUnit.csproj", "{8A6346B7-5146-4202-8DAA-2F114386B93F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sekiban.Pure.Orleans.xUnit", "Sekiban.Pure.Orleans.xUnit\Sekiban.Pure.Orleans.xUnit.csproj", "{C306D5BE-64DC-47B3-84D3-D0F800C60892}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +106,10 @@ Global
 		{8A6346B7-5146-4202-8DAA-2F114386B93F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A6346B7-5146-4202-8DAA-2F114386B93F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A6346B7-5146-4202-8DAA-2F114386B93F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C306D5BE-64DC-47B3-84D3-D0F800C60892}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C306D5BE-64DC-47B3-84D3-D0F800C60892}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C306D5BE-64DC-47B3-84D3-D0F800C60892}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C306D5BE-64DC-47B3-84D3-D0F800C60892}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

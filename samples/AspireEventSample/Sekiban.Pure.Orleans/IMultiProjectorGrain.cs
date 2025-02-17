@@ -8,5 +8,5 @@ public interface IMultiProjectorGrain : IGrainWithStringKey
     Task BuildStateAsync();
     Task<MultiProjectionState> GetStateAsync();
     Task<QueryResultGeneral> QueryAsync(IQueryCommon query);
-    Task<ListQueryResultGeneral> QueryAsync(IListQueryCommon query);
+    Task<IListQueryResult> QueryAsync(IListQueryCommon query);
 }

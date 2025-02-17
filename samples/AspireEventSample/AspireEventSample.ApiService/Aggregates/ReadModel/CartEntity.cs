@@ -1,11 +1,6 @@
-using Sekiban.Pure.Orleans;
-
-namespace AspireEventSample.ApiService.Aggregates.ReadModel;
-
 using AspireEventSample.ApiService.Aggregates.Carts;
-using Orleans.Serialization;
-using Sekiban.Pure.Documents;
-using System.Collections.Generic;
+using Sekiban.Pure.Orleans.ReadModels;
+namespace AspireEventSample.ApiService.Aggregates.ReadModel;
 
 [GenerateSerializer]
 public record CartEntity : IReadModelEntity
@@ -22,7 +17,7 @@ public record CartEntity : IReadModelEntity
     public required string LastSortableUniqueId { get; init; }
     [Id(5)]
     public required DateTime TimeStamp { get; init; }
-    
+
     // Cart specific properties
     [Id(6)]
     public required Guid UserId { get; init; }

@@ -1,7 +1,8 @@
 using ResultBoxes;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
-namespace Sekiban.Pure.Orleans;
+using Sekiban.Pure.Orleans.Parts;
+namespace Sekiban.Pure.Orleans.Grains;
 
 public class AggregateEventHandlerGrain(
     [PersistentState("aggregate", "Default")]
