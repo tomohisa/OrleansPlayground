@@ -12,7 +12,7 @@ public class MultiProjectorGrain(
     IEventReader eventReader,
     SekibanDomainTypes sekibanDomainTypes) : Grain, IMultiProjectorGrain
 {
-    private static readonly TimeSpan SafeStateTime = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan SafeStateTime = TimeSpan.FromSeconds(5);
     private MultiProjectionState? UnsafeState { get; set; }
 
     public async Task RebuildStateAsync()

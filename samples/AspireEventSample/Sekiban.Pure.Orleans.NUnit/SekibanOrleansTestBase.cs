@@ -26,21 +26,19 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
     public abstract SekibanDomainTypes GetDomainTypes();
 
     private ICommandMetadataProvider _commandMetadataProvider;
-    private IServiceProvider _serviceProvider;
     private ISekibanExecutor _executor;
     private TestCluster _cluster;
-    private readonly Repository _repository = new();
+    private Repository _repository = new();
 
     [SetUp]
     public virtual void SetUp()
     {
         _commandMetadataProvider = new FunctionCommandMetadataProvider(() => "test");
+        _repository = new Repository();
         var builder = new TestClusterBuilder();
         builder.AddSiloBuilderConfigurator<TDomainTypesGetter>();
         _cluster = builder.Build();
         _cluster.Deploy();
-
-        _serviceProvider = _cluster.ServiceProvider;
         _executor = new SekibanOrleansExecutor(_cluster.Client, _domainTypes, _commandMetadataProvider);
     }
 
