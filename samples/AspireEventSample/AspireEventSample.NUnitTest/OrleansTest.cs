@@ -1,6 +1,7 @@
 using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.Carts;
 using AspireEventSample.ApiService.Generated;
+using AspireEventSample.ApiService.Projections;
 using ResultBoxes;
 using Sekiban.Pure;
 using Sekiban.Pure.Orleans.NUnit;
@@ -19,26 +20,22 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
             .Do(payload => Assert.That(payload.Name, Is.EqualTo("ES")))
             .UnwrapBox();
 
-    // [Test]
-    // public void TestCreateShoppingCart()
-    //     => Assert.ThrowsAsync<CodecNotFoundException>(
-    //         () => WhenCommand(new CreateShoppingCart(Guid.CreateVersion7())));
-
     [Test]
     public Task TestCreateShoppingCart()
         => WhenCommand(new CreateShoppingCart(Guid.CreateVersion7())).UnwrapBox();
 
-    // [Test]
-    // public void SerializationOrleansTest1()
-    // {
-    //     var original = new CreateShoppingCart(Guid.CreateVersion7());
-    //
-    //     // シリアライズ→デシリアライズのラウンドトリップ
-    //     var copy = Orleans.Serialization.SerializationManager.RoundTripSerializationForTesting(original);
-    //
-    //     // オブジェクトの内容が一致しているか検証
-    //     Assert.Equal(original, copy);
-    // }
     public override SekibanDomainTypes GetDomainTypes() =>
         AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options);
+
+    [Test]
+    public Task RegisterBranchAndListQueryTest()
+        => GivenCommand(new RegisterBranch("DDD"))
+            .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(_ => ThenQuery(new BranchExistsQuery("ES")))
+            .Do(queryResult => Assert.That(queryResult, Is.True))
+            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("DDD")))
+            .Do(queryResult => Assert.That(queryResult.Items, Is.Empty))
+            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("ES")))
+            .Do(queryResult => Assert.That(queryResult.Items.Count(), Is.EqualTo(1)))
+            .UnwrapBox();
 }

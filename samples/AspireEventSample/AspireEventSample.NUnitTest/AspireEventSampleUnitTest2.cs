@@ -23,7 +23,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
             .UnwrapBox();
 
     [Test]
-    public Task RegisterBranchAndQueryTest()
+    public Task RegisterBranchAnd___QueryTest2()
         => GivenCommand(new RegisterBranch("DDD"))
             .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQuery(new BranchExistsQuery("DDD")))
@@ -32,7 +32,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
             .Do(queryResult => Assert.That(queryResult, Is.True))
             .UnwrapBox();
     [Test]
-    public Task RegisterBranchAndListQueryTest()
+    public Task RegisterBranchAndList8888Quer()
         => GivenCommand(new RegisterBranch("DDD"))
             .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("DDD")))

@@ -28,6 +28,7 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
     private IServiceProvider _serviceProvider;
     private ISekibanExecutor _executor;
     private TestCluster _cluster;
+    private readonly Repository _repository = new();
 
     [SetUp]
     public virtual void SetUp()
@@ -93,7 +94,6 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
     }
     public virtual void Configure(ISiloBuilder siloBuilder)
     {
-        var repository = new Repository();
         siloBuilder.AddMemoryGrainStorage("PubSubStore");
         siloBuilder.AddMemoryGrainStorageAsDefault();
         siloBuilder.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
@@ -101,7 +101,7 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
             services =>
             {
                 services.AddSingleton(_domainTypes);
-                services.AddSingleton(repository);
+                services.AddSingleton(_repository);
                 services.AddTransient<IEventWriter, InMemoryEventWriter>();
                 services.AddTransient<IEventReader, InMemoryEventReader>();
                 // services.AddTransient()
