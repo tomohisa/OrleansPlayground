@@ -47,7 +47,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
             .UnwrapBox();
 
     [Fact]
-    public Task RegisterBranchAndListQueryTest()
+    public Task RegisterBranchAndListQuery()
         => GivenCommand(new RegisterBranch("DDD"))
             .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("DDD")))

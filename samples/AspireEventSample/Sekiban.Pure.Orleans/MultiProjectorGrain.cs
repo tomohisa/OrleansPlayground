@@ -22,9 +22,18 @@ public class MultiProjectorGrain(
         var events = (await eventReader.GetEvents(info)).UnwrapBox();
         var currentTime = DateTime.UtcNow;
         var safeTimeThreshold = currentTime.Subtract(SafeStateTime);
+        safeState.State = new MultiProjectionState(
+            projector,
+            Guid.Empty,
+            string.Empty,
+            0,
+            0,
+            "default");
 
+        Console.WriteLine("RebuildStateAsync 33");
         if (events.Count == 0) return;
         var projectedState = sekibanDomainTypes.MultiProjectorsType.Project(projector, events).UnwrapBox();
+        Console.WriteLine("RebuildStateAsync 36");
 
         // Split events into safe and unsafe based on time
         var lastEvent = events[^1];
@@ -56,8 +65,10 @@ public class MultiProjectorGrain(
             {
                 var safeEvents = events.Take(splitIndex + 1).ToList();
                 var lastSafeEvent = safeEvents[^1];
+                Console.WriteLine("RebuildStateAsync 68");
                 var safeProjectedState
                     = sekibanDomainTypes.MultiProjectorsType.Project(projector, safeEvents).UnwrapBox();
+                Console.WriteLine("RebuildStateAsync 71");
                 safeState.State = new MultiProjectionState(
                     safeProjectedState,
                     lastSafeEvent.Id,
@@ -98,10 +109,12 @@ public class MultiProjectorGrain(
         var currentTime = DateTime.UtcNow;
         var safeTimeThreshold = currentTime.Subtract(SafeStateTime);
 
+        Console.WriteLine("RebuildStateAsync 112");
         var projectedState = sekibanDomainTypes
             .MultiProjectorsType
             .Project(safeState.State.ProjectorCommon, events)
             .UnwrapBox();
+        Console.WriteLine("RebuildStateAsync 117");
 
         var lastEvent = events[^1];
         var lastEventSortableId = new SortableUniqueIdValue(lastEvent.SortableUniqueId);
@@ -130,6 +143,7 @@ public class MultiProjectorGrain(
 
             if (splitIndex >= 0)
             {
+                Console.WriteLine("RebuildStateAsync 146");
                 var safeEvents = events.Take(splitIndex + 1).ToList();
                 var lastSafeEvent = safeEvents[^1];
                 var safeProjectedState =
@@ -137,6 +151,7 @@ public class MultiProjectorGrain(
                         .MultiProjectorsType
                         .Project(safeState.State.ProjectorCommon, safeEvents)
                         .UnwrapBox();
+                Console.WriteLine("RebuildStateAsync 154");
                 safeState.State = new MultiProjectionState(
                     safeProjectedState,
                     lastSafeEvent.Id,
@@ -164,7 +179,7 @@ public class MultiProjectorGrain(
         return UnsafeState ?? safeState.State;
     }
 
-    public async Task<OrleansQueryResultGeneral> QueryAsync(IQueryCommon query)
+    public async Task<QueryResultGeneral> QueryAsync(IQueryCommon query)
     {
         var result = await sekibanDomainTypes.QueryTypes.ExecuteAsQueryResult(
                 query,
@@ -173,11 +188,10 @@ public class MultiProjectorGrain(
             throw new ApplicationException("Query not found");
         return result
             .Remap(value => value.ToGeneral(query))
-            .Remap(OrleansQueryResultGeneral.FromQueryResultGeneral)
             .UnwrapBox();
     }
 
-    public async Task<OrleansListQueryResultGeneral> QueryAsync(IListQueryCommon query)
+    public async Task<ListQueryResultGeneral> QueryAsync(IListQueryCommon query)
     {
         var result = await sekibanDomainTypes.QueryTypes.ExecuteAsQueryResult(
                 query,
@@ -186,7 +200,6 @@ public class MultiProjectorGrain(
             throw new ApplicationException("Query not found");
         return result
             .Remap(value => value.ToGeneral(query))
-            .Remap(OrleansListQueryResultGeneral.FromListQueryResultGeneral)
             .UnwrapBox();
     }
 
@@ -210,6 +223,10 @@ public class MultiProjectorGrain(
     {
         await base.OnActivateAsync(cancellationToken);
         await safeState.ReadStateAsync();
+        if (safeState.RecordExists == false)
+        {
+            await RebuildStateAsync();
+        }
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)

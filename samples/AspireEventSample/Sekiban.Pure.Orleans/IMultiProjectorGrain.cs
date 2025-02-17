@@ -7,6 +7,6 @@ public interface IMultiProjectorGrain : IGrainWithStringKey
     Task RebuildStateAsync();
     Task BuildStateAsync();
     Task<MultiProjectionState> GetStateAsync();
-    Task<OrleansQueryResultGeneral> QueryAsync(IQueryCommon query);
-    Task<OrleansListQueryResultGeneral> QueryAsync(IListQueryCommon query);
+    Task<QueryResultGeneral> QueryAsync(IQueryCommon query);
+    Task<ListQueryResultGeneral> QueryAsync(IListQueryCommon query);
 }
