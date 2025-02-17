@@ -31,7 +31,6 @@ public class MultiProjectorGrain(
             "default");
 
         if (events.Count == 0) return;
-        var projectedState = sekibanDomainTypes.MultiProjectorsType.Project(projector, events).UnwrapBox();
 
         // Split events into safe and unsafe based on time
         var lastEvent = events[^1];
@@ -40,6 +39,7 @@ public class MultiProjectorGrain(
 
         if (lastEventSortableId.IsEarlierThan(safeTimeIdValue))
         {
+            var projectedState = sekibanDomainTypes.MultiProjectorsType.Project(projector, events).UnwrapBox();
             // All events are safe to persist
             safeState.State = new MultiProjectionState(
                 projectedState,
@@ -76,13 +76,20 @@ public class MultiProjectorGrain(
             }
 
             // Set unsafe state with full projection
+            var unsafeEvents = events.Skip(splitIndex + 1).ToList();
+            var unsafeProjectedState =
+                sekibanDomainTypes
+                    .MultiProjectorsType
+                    .Project(safeState.State.ProjectorCommon, unsafeEvents)
+                    .UnwrapBox();
+            // Set unsafe state with full projection
             UnsafeState = new MultiProjectionState(
-                projectedState,
+                unsafeProjectedState,
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
-                safeState.State?.Version + 1 ?? 1,
+                safeState.State.Version + 1,
                 0,
-                safeState.State?.RootPartitionKey ?? "default");
+                safeState.State.RootPartitionKey);
         }
     }
 
@@ -105,10 +112,6 @@ public class MultiProjectorGrain(
         var currentTime = DateTime.UtcNow;
         var safeTimeThreshold = currentTime.Subtract(SafeStateTime);
 
-        var projectedState = sekibanDomainTypes
-            .MultiProjectorsType
-            .Project(safeState.State.ProjectorCommon, events)
-            .UnwrapBox();
 
         var lastEvent = events[^1];
         var lastEventSortableId = new SortableUniqueIdValue(lastEvent.SortableUniqueId);
@@ -116,6 +119,11 @@ public class MultiProjectorGrain(
 
         if (lastEventSortableId.IsEarlierThan(safeTimeIdValue))
         {
+            var projectedState = sekibanDomainTypes
+                .MultiProjectorsType
+                .Project(safeState.State.ProjectorCommon, events)
+                .UnwrapBox();
+
             // All new events are safe to persist
             safeState.State = new MultiProjectionState(
                 projectedState,
@@ -134,7 +142,6 @@ public class MultiProjectorGrain(
                 .FindLastIndex(
                     e =>
                         new SortableUniqueIdValue(e.SortableUniqueId).IsEarlierThan(safeTimeIdValue));
-
             if (splitIndex >= 0)
             {
                 var safeEvents = events.Take(splitIndex + 1).ToList();
@@ -153,10 +160,15 @@ public class MultiProjectorGrain(
                     safeState.State.RootPartitionKey);
                 await safeState.WriteStateAsync();
             }
-
+            var unsafeEvents = events.Skip(splitIndex + 1).ToList();
+            var unsafeProjectedState =
+                sekibanDomainTypes
+                    .MultiProjectorsType
+                    .Project(safeState.State.ProjectorCommon, unsafeEvents)
+                    .UnwrapBox();
             // Set unsafe state with full projection
             UnsafeState = new MultiProjectionState(
-                projectedState,
+                unsafeProjectedState,
                 lastEvent.Id,
                 lastEvent.SortableUniqueId,
                 safeState.State.Version + 1,

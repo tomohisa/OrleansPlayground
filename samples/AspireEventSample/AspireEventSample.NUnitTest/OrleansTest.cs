@@ -17,11 +17,11 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
             .Conveyor(response => WhenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.That(response.Version, Is.EqualTo(2)))
-            .Do( // wait 10 second for the event to be processed
-                async _ =>
-                {
-                    await Task.Delay(10000);
-                })
+            // .Do( // wait 10 second for the event to be processed
+            //     async _ =>
+            //     {
+            //         await Task.Delay(10000);
+            //     })
             .Conveyor(response => ThenGetAggregate<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
             .Do(payload => Assert.That(payload.Name, Is.EqualTo("ES")))
