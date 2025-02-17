@@ -8,7 +8,7 @@ namespace Sekiban.Pure.Orleans.Grains;
 
 public class MultiProjectorGrain : Grain, IMultiProjectorGrain
 {
-    private static readonly TimeSpan SafeStateTime = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan SafeStateTime = TimeSpan.FromSeconds(7);
     private MultiProjectionState? UnsafeState { get; set; }
     private readonly IPersistentState<MultiProjectionState> safeState;
     private readonly IEventReader eventReader;
