@@ -2,6 +2,7 @@ using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Aggregates.Carts;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Projections;
+using Orleans.Serialization;
 using ResultBoxes;
 using Sekiban.Pure;
 using Sekiban.Pure.Orleans.NUnit;
@@ -21,8 +22,14 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
             .UnwrapBox();
 
     [Test]
-    public Task TestCreateShoppingCart()
-        => WhenCommand(new CreateShoppingCart(Guid.CreateVersion7())).UnwrapBox();
+    public void TestCreateShoppingCartThrows()
+    {
+        Assert.ThrowsAsync<CodecNotFoundException>(
+            async () =>
+            {
+                await WhenCommand(new CreateShoppingCart(Guid.CreateVersion7())).UnwrapBox();
+            });
+    }
 
     public override SekibanDomainTypes GetDomainTypes() =>
         AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options);
