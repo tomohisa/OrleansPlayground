@@ -12,7 +12,6 @@ public record BranchMultiProjector(
 {
     public ResultBox<BranchMultiProjector> Project(BranchMultiProjector payload, IEvent ev)
     {
-        Console.WriteLine(ev.Id + " pj");
         return ev.GetPayload() switch
         {
             BranchCreated branchCreated => payload with

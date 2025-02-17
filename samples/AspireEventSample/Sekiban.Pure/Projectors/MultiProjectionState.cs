@@ -42,7 +42,6 @@ public record MultiProjectionState<TMultiProjector>(
 
     public ResultBox<MultiProjectionState<TMultiProjector>> ApplyEvent(IEvent ev)
     {
-        Console.WriteLine("project event " + ev.Id);
         return Payload
             .Project(Payload, ev)
             .Remap(
