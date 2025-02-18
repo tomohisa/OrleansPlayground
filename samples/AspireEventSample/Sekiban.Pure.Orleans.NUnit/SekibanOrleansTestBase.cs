@@ -54,39 +54,39 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
     /// <summary>
     ///     Execute command in Given phase
     /// </summary>
-    protected Task<ResultBox<CommandResponse>> GivenCommand(
+    protected ResultBox<CommandResponse> GivenCommandWithResult(
         ICommandWithHandlerSerializable command,
         IEvent? relatedEvent = null) =>
-        _executor.CommandAsync(command, relatedEvent);
+        _executor.CommandAsync(command, relatedEvent).UnwrapBox().Result;
 
     /// <summary>
     ///     Execute command in When phase
     /// </summary>
-    protected Task<ResultBox<CommandResponse>> WhenCommand(
+    protected ResultBox<CommandResponse> WhenCommandWithResult(
         ICommandWithHandlerSerializable command,
         IEvent? relatedEvent = null) =>
-        _executor.CommandAsync(command, relatedEvent);
+        _executor.CommandAsync(command, relatedEvent).UnwrapBox().Result;
 
     /// <summary>
     ///     Get aggregate in Then phase
     /// </summary>
-    protected Task<ResultBox<Aggregate>> ThenGetAggregate<TAggregateProjector>(PartitionKeys partitionKeys)
+    protected ResultBox<Aggregate> ThenGetAggregateWithResult<TAggregateProjector>(PartitionKeys partitionKeys)
         where TAggregateProjector : IAggregateProjector, new()
-        => _executor.LoadAggregateAsync<TAggregateProjector>(partitionKeys);
+        => _executor.LoadAggregateAsync<TAggregateProjector>(partitionKeys).UnwrapBox().Result;
 
-    protected Task<ResultBox<TResult>> ThenQuery<TResult>(IQueryCommon<TResult> query) where TResult : notnull
-        => _executor.QueryAsync(query);
+    protected ResultBox<TResult> ThenQueryWithResult<TResult>(IQueryCommon<TResult> query) where TResult : notnull
+        => _executor.QueryAsync(query).UnwrapBox().Result;
 
-    protected Task<ResultBox<ListQueryResult<TResult>>> ThenQuery<TResult>(IListQueryCommon<TResult> query)
+    protected ResultBox<ListQueryResult<TResult>> ThenQueryWithResult<TResult>(IListQueryCommon<TResult> query)
         where TResult : notnull
-        => _executor.QueryAsync(query);
+        => _executor.QueryAsync(query).UnwrapBox().Result;
 
-    protected async Task<ResultBox<TMultiProjector>> ThenGetMultiProjector<TMultiProjector>()
+    protected ResultBox<TMultiProjector> ThenGetMultiProjectorWithResult<TMultiProjector>()
         where TMultiProjector : IMultiProjector<TMultiProjector>
     {
         var projector
             = _cluster.Client.GetGrain<IMultiProjectorGrain>(TMultiProjector.GetMultiProjectorName());
-        var state = await projector.GetStateAsync();
+        var state = projector.GetStateAsync().Result;
         var typed = _domainTypes.MultiProjectorsType.ToTypedState(state);
         if (typed is MultiProjectionState<TMultiProjector> multiProjectionState)
         {
@@ -94,6 +94,44 @@ public abstract class SekibanOrleansTestBase<TDomainTypesGetter> : ISiloConfigur
         }
         return ResultBox<TMultiProjector>.Error(new ApplicationException("Invalid state"));
     }
+
+    /// <summary>
+    ///     Execute command in When phase.
+    /// </summary>
+    protected CommandResponse WhenCommand(
+        ICommandWithHandlerSerializable command,
+        IEvent? relatedEvent = null) =>
+        _executor.CommandAsync(command, relatedEvent).UnwrapBox().Result;
+
+    /// <summary>
+    ///     Get aggregate in Then phase.
+    /// </summary>
+    protected Aggregate ThenGetAggregate<TAggregateProjector>(PartitionKeys partitionKeys)
+        where TAggregateProjector : IAggregateProjector, new() =>
+        _executor.LoadAggregateAsync<TAggregateProjector>(partitionKeys).UnwrapBox().Result;
+
+    protected TResult ThenQuery<TResult>(IQueryCommon<TResult> query) where TResult : notnull =>
+        _executor.QueryAsync(query).UnwrapBox().Result;
+
+    protected ListQueryResult<TResult> ThenQuery<TResult>(IListQueryCommon<TResult> query)
+        where TResult : notnull =>
+        _executor.QueryAsync(query).UnwrapBox().Result;
+
+    protected TMultiProjector ThenGetMultiProjector<TMultiProjector>()
+        where TMultiProjector : IMultiProjector<TMultiProjector>
+    {
+        var projector = _cluster.Client.GetGrain<IMultiProjectorGrain>(TMultiProjector.GetMultiProjectorName());
+        var state = projector.GetStateAsync().Result;
+        var typed = _domainTypes.MultiProjectorsType.ToTypedState(state);
+        if (typed is MultiProjectionState<TMultiProjector> multiProjectionState)
+        {
+            return multiProjectionState.Payload;
+        }
+        throw new ApplicationException("Invalid state");
+    }
+
+
+
     public virtual void Configure(ISiloBuilder siloBuilder)
     {
         siloBuilder.AddMemoryGrainStorage("PubSubStore");

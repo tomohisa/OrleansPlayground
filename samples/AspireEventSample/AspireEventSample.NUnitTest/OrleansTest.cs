@@ -12,22 +12,22 @@ namespace AspireEventSample.NUnitTest;
 public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
 {
     [Test]
-    public Task Test1()
-        => GivenCommand(new RegisterBranch("DDD"))
+    public void Test1()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
-            .Conveyor(response => WhenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.That(response.Version, Is.EqualTo(2)))
-            .Conveyor(response => ThenGetAggregate<BranchProjector>(response.PartitionKeys))
+            .Conveyor(response => ThenGetAggregateWithResult<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
             .Do(payload => Assert.That(payload.Name, Is.EqualTo("ES")))
-            .Conveyor(_ => ThenGetMultiProjector<BranchMultiProjector>())
+            .Conveyor(_ => ThenGetMultiProjectorWithResult<BranchMultiProjector>())
             .Do(
                 projector =>
                 {
                     Assert.That(projector.Branches.Count, Is.EqualTo(1));
                     Assert.That(projector.Branches.Values.First().BranchName, Is.EqualTo("ES"));
                 })
-            .Conveyor(_ => ThenGetMultiProjector<AggregateListProjector<BranchProjector>>())
+            .Conveyor(_ => ThenGetMultiProjectorWithResult<AggregateListProjector<BranchProjector>>())
             .Do(
                 projector =>
                 {
@@ -40,10 +40,10 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
     [Test]
     public void TestCreateShoppingCartThrows()
     {
-        Assert.ThrowsAsync<CodecNotFoundException>(
-            async () =>
+        Assert.Throws<AggregateException>(
+            () =>
             {
-                await WhenCommand(new CreateShoppingCart(Guid.CreateVersion7())).UnwrapBox();
+                WhenCommandWithResult(new CreateShoppingCart(Guid.CreateVersion7())).UnwrapBox();
             });
     }
 
@@ -51,14 +51,15 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
         AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options);
 
     [Test]
-    public Task RegisterBranchAndListQueryTest()
-        => GivenCommand(new RegisterBranch("DDD"))
-            .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
-            .Conveyor(_ => ThenQuery(new BranchExistsQuery("ES")))
+    public void RegisterBranchAndListQueryTest()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
+            .Conveyor(
+                response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("ES")))
             .Do(queryResult => Assert.That(queryResult, Is.True))
-            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("DDD")))
+            .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("DDD")))
             .Do(queryResult => Assert.That(queryResult.Items, Is.Empty))
-            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("ES")))
+            .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("ES")))
             .Do(queryResult => Assert.That(queryResult.Items.Count(), Is.EqualTo(1)))
             .UnwrapBox();
 }

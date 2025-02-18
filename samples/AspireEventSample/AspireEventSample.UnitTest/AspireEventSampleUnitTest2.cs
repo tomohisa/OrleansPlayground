@@ -12,47 +12,49 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
         AspireEventSampleApiServiceEventsJsonContext.Default.Options);
 
     [Fact]
-    public Task RegisterBranchTest()
-        => GivenCommand(new RegisterBranch("DDD"))
+    public void RegisterBranchTest()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
             .Do(response => Assert.Equal(1, response.Version))
-            .Conveyor(response => WhenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.Equal(2, response.Version))
-            .Conveyor(response => ThenGetAggregate<BranchProjector>(response.PartitionKeys))
+            .Conveyor(response => ThenGetAggregateWithResult<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
             .Do(payload => Assert.Equal("ES", payload.Name))
             .UnwrapBox();
 
     [Fact]
-    public Task RegisterTwoBranchTest()
-        => GivenCommand(new RegisterBranch("DDD"))
+    public void RegisterTwoBranchTest()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
             .Do(_ => Assert.Single(Repository.Events))
-            .Conveyor(_ => GivenCommand(new RegisterBranch("DDD2")))
+            .Conveyor(_ => GivenCommandWithResult(new RegisterBranch("DDD2")))
             .Do(_ => Assert.Equal(2, Repository.Events.Count))
             .Do(response => Assert.Equal(1, response.Version))
-            .Conveyor(response => WhenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.Equal(2, response.Version))
-            .Conveyor(response => ThenGetAggregate<BranchProjector>(response.PartitionKeys))
+            .Conveyor(response => ThenGetAggregateWithResult<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
             .Do(payload => Assert.Equal("ES", payload.Name))
             .UnwrapBox();
 
     [Fact]
-    public Task RegisterBranchAndQueryTest()
-        => GivenCommand(new RegisterBranch("DDD"))
-            .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
-            .Conveyor(_ => ThenQuery(new BranchExistsQuery("DDD")))
+    public void RegisterBranchAndQueryTest()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
+            .Conveyor(
+                response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("DDD")))
             .Do(Assert.False)
-            .Conveyor(_ => ThenQuery(new BranchExistsQuery("ES")))
+            .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("ES")))
             .Do(Assert.True)
             .UnwrapBox();
 
     [Fact]
-    public Task RegisterBranchAndListQuery()
-        => GivenCommand(new RegisterBranch("DDD"))
-            .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
-            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("DDD")))
+    public void RegisterBranchAndListQuery()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
+            .Conveyor(
+                response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("DDD")))
             .Do(queryResult => Assert.Empty(queryResult.Items))
-            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("ES")))
+            .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("ES")))
             .Do(queryResult => Assert.Single(queryResult.Items))
             .UnwrapBox();
 }
