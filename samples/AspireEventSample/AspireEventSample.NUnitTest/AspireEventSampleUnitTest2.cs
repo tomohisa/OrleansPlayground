@@ -12,45 +12,47 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
         AspireEventSampleApiServiceEventsJsonContext.Default.Options);
 
     [Test]
-    public Task RegisterBranchTest()
-        => GivenCommand(new RegisterBranch("DDD"))
+    public void RegisterBranchTest()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
-            .Conveyor(response => WhenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.That(response.Version, Is.EqualTo(2)))
-            .Conveyor(response => ThenGetAggregate<BranchProjector>(response.PartitionKeys))
+            .Conveyor(response => ThenGetAggregateWithResult<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
             .Do(payload => Assert.That(payload.Name, Is.EqualTo("ES")))
             .UnwrapBox();
 
     [Test]
-    public Task RegisterBranchAnd___QueryTest2()
-        => GivenCommand(new RegisterBranch("DDD"))
-            .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
-            .Conveyor(_ => ThenQuery(new BranchExistsQuery("DDD")))
+    public void RegisterBranchAnd___QueryTest2()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
+            .Conveyor(
+                response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("DDD")))
             .Do(queryResult => Assert.That(queryResult, Is.False))
-            .Conveyor(_ => ThenQuery(new BranchExistsQuery("ES")))
+            .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("ES")))
             .Do(queryResult => Assert.That(queryResult, Is.True))
             .UnwrapBox();
     [Test]
-    public Task RegisterBranchAndList8888Quer()
-        => GivenCommand(new RegisterBranch("DDD"))
-            .Conveyor(response => GivenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
-            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("DDD")))
+    public void RegisterBranchAndListQuery()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
+            .Conveyor(
+                response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("DDD")))
             .Do(queryResult => Assert.That(queryResult.Items.Count(), Is.EqualTo(0)))
-            .Conveyor(_ => ThenQuery(new SimpleBranchListQuery("ES")))
+            .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("ES")))
             .Do(queryResult => Assert.That(queryResult.Items.Count(), Is.EqualTo(1)))
             .UnwrapBox();
 
     [Test]
-    public Task RegisterTwoBranchTest()
-        => GivenCommand(new RegisterBranch("DDD"))
+    public void RegisterTwoBranchTest()
+        => GivenCommandWithResult(new RegisterBranch("DDD"))
             .Do(_ => Assert.That(Repository.Events, Has.Count.EqualTo(1)))
-            .Conveyor(_ => GivenCommand(new RegisterBranch("DDD2")))
+            .Conveyor(_ => GivenCommandWithResult(new RegisterBranch("DDD2")))
             .Do(_ => Assert.That(Repository.Events, Has.Count.EqualTo(2)))
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
-            .Conveyor(response => WhenCommand(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
+            .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.That(response.Version, Is.EqualTo(2)))
-            .Conveyor(response => ThenGetAggregate<BranchProjector>(response.PartitionKeys))
+            .Conveyor(response => ThenGetAggregateWithResult<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
             .Do(payload => Assert.That(payload.Name, Is.EqualTo("ES")))
             .UnwrapBox();
