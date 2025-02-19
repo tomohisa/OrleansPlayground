@@ -5,7 +5,7 @@ using Sekiban.Pure.Command.Handlers;
 using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 namespace AspireEventSample.ApiService.Aggregates.Carts;
-
+[GenerateSerializer]
 public record CreateShoppingCart(Guid UserId) : ICommandWithHandlerAsync<CreateShoppingCart, ShoppingCartProjector>
 {
     public PartitionKeys SpecifyPartitionKeys(CreateShoppingCart command) =>
