@@ -46,6 +46,11 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
                 WhenCommandWithResult(new CreateShoppingCart(Guid.CreateVersion7())).UnwrapBox();
             });
     }
+    [Fact]
+    public void TestSerializable()
+    {
+        CheckSerializability(new CreateShoppingCart(Guid.CreateVersion7()));
+    }
 
     public override SekibanDomainTypes GetDomainTypes() =>
         AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options);
