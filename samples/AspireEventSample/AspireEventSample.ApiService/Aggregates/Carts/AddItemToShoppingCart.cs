@@ -6,7 +6,7 @@ using Sekiban.Pure.Documents;
 using Sekiban.Pure.Events;
 
 namespace AspireEventSample.ApiService.Aggregates.Carts;
-
+[GenerateSerializer]
 public record AddItemToShoppingCart(Guid ShoppingCartId, string Name, int Quantity, Guid ItemId, int Price) : ICommandWithHandlerAsync<AddItemToShoppingCart, ShoppingCartProjector>
 {
     public PartitionKeys SpecifyPartitionKeys(AddItemToShoppingCart command) =>
