@@ -9,6 +9,7 @@ public static class SekibanSerializationTypesChecker
     {
         CheckEventsSerializability(domainTypes);
         CheckCommandsSerializability(domainTypes);
+        CheckQuerySerializability(domainTypes);
     }
 
     private static Serializer GetSerializer()
@@ -30,6 +31,14 @@ public static class SekibanSerializationTypesChecker
     public static void CheckCommandsSerializability(SekibanDomainTypes domainTypes)
     {
         foreach (var type in domainTypes.CommandTypes.GetCommandTypes())
+        {
+            CheckTypeSerializability(type);
+        }
+    }
+
+    public static void CheckQuerySerializability(SekibanDomainTypes domainTypes)
+    {
+        foreach (var type in domainTypes.QueryTypes.GetQueryTypes())
         {
             CheckTypeSerializability(type);
         }
