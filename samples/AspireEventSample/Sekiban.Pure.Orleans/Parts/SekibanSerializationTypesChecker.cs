@@ -10,6 +10,9 @@ public static class SekibanSerializationTypesChecker
         CheckEventsSerializability(domainTypes);
         CheckCommandsSerializability(domainTypes);
         CheckQuerySerializability(domainTypes);
+        CheckQueryResponseSerializability(domainTypes);
+        CheckAggregateSerializability(domainTypes);
+        CheckMultiProjectorSerializability(domainTypes);
     }
 
     private static Serializer GetSerializer()
@@ -39,6 +42,30 @@ public static class SekibanSerializationTypesChecker
     public static void CheckQuerySerializability(SekibanDomainTypes domainTypes)
     {
         foreach (var type in domainTypes.QueryTypes.GetQueryTypes())
+        {
+            CheckTypeSerializability(type);
+        }
+    }
+
+    public static void CheckQueryResponseSerializability(SekibanDomainTypes domainTypes)
+    {
+        foreach (var type in domainTypes.QueryTypes.GetQueryResponseTypes())
+        {
+            CheckTypeSerializability(type);
+        }
+    }
+
+    public static void CheckAggregateSerializability(SekibanDomainTypes domainTypes)
+    {
+        foreach (var type in domainTypes.AggregateTypes.GetAggregateTypes())
+        {
+            CheckTypeSerializability(type);
+        }
+    }
+
+    public static void CheckMultiProjectorSerializability(SekibanDomainTypes domainTypes)
+    {
+        foreach (var type in domainTypes.MultiProjectorsType.GetMultiProjectorTypes())
         {
             CheckTypeSerializability(type);
         }
