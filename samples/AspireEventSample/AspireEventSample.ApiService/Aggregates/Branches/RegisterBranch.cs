@@ -9,9 +9,9 @@ using System.ComponentModel.DataAnnotations;
 namespace AspireEventSample.ApiService.Aggregates.Branches;
 
 [GenerateSerializer]
-public record RegisterBranch([property:Required]string Name) : ICommandWithHandler<RegisterBranch, BranchProjector>
+public record RegisterBranch([property:Required]string Name, [property:Required]string Country) : ICommandWithHandler<RegisterBranch, BranchProjector>
 {
     public PartitionKeys SpecifyPartitionKeys(RegisterBranch command) => PartitionKeys<BranchProjector>.Generate();
     public ResultBox<EventOrNone> Handle(RegisterBranch command, ICommandContext<IAggregatePayload> context) =>
-        EventOrNone.Event(new BranchCreated(command.Name));
+        EventOrNone.Event(new BranchCreated(command.Name, command.Country));
 }

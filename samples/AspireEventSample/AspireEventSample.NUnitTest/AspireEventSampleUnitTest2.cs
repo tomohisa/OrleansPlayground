@@ -13,7 +13,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
 
     [Test]
     public void RegisterBranchTest()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
             .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.That(response.Version, Is.EqualTo(2)))
@@ -24,7 +24,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
 
     [Test]
     public void RegisterBranchAnd___QueryTest2()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Conveyor(
                 response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("DDD")))
@@ -34,7 +34,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
             .UnwrapBox();
     [Test]
     public void RegisterBranchAndListQuery()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Conveyor(
                 response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("DDD")))
@@ -45,9 +45,9 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
 
     [Test]
     public void RegisterTwoBranchTest()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Do(_ => Assert.That(Repository.Events, Has.Count.EqualTo(1)))
-            .Conveyor(_ => GivenCommandWithResult(new RegisterBranch("DDD2")))
+            .Conveyor(_ => GivenCommandWithResult(new RegisterBranch("DDD2", "USA")))
             .Do(_ => Assert.That(Repository.Events, Has.Count.EqualTo(2)))
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
             .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))

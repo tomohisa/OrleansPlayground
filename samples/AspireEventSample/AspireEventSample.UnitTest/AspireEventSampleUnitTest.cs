@@ -1,4 +1,4 @@
-﻿using AspireEventSample.ApiService.Aggregates.Branches;
+﻿﻿﻿using AspireEventSample.ApiService.Aggregates.Branches;
 using AspireEventSample.ApiService.Generated;
 using AspireEventSample.ApiService.Projections;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,7 +34,7 @@ public class AspireEventSampleUnitTest
             new Repository(),
             new ServiceCollection().BuildServiceProvider());
 
-        var result1 = await executor.CommandAsync(new RegisterBranch("DDD"));
+        var result1 = await executor.CommandAsync(new RegisterBranch("DDD", "Japan"));
         Assert.True(result1.IsSuccess);
         var value = result1.GetValue();
         Assert.NotNull(value);
@@ -53,7 +53,7 @@ public class AspireEventSampleUnitTest
             new ServiceCollection().BuildServiceProvider());
 
         // Register a branch to generate events
-        var commandResult = await executor.CommandAsync(new RegisterBranch("TestList"));
+        var commandResult = await executor.CommandAsync(new RegisterBranch("TestList", "Japan"));
         Assert.True(commandResult.IsSuccess, "RegisterBranch command should succeed");
 
         var listQuery = new SimpleBranchListQuery("TestList");
@@ -71,7 +71,7 @@ public class AspireEventSampleUnitTest
             new ServiceCollection().BuildServiceProvider());
 
         // Register a branch to generate events
-        var commandResult = await executor.CommandAsync(new RegisterBranch("TestLoad"));
+        var commandResult = await executor.CommandAsync(new RegisterBranch("TestLoad", "Japan"));
         Assert.True(commandResult.IsSuccess, "RegisterBranch command should succeed");
 
         var aggregateId = commandResult.GetValue().PartitionKeys.AggregateId;
@@ -84,6 +84,8 @@ public class AspireEventSampleUnitTest
         var aggregate = aggregateResult.GetValue();
         Assert.NotNull(aggregate);
         Assert.Equal(aggregateId, aggregate.PartitionKeys.AggregateId);
-        Assert.Equal("TestLoad", ((Branch)aggregate.Payload).Name);
+        var branch = (Branch)aggregate.Payload;
+        Assert.Equal("TestLoad", branch.Name);
+        Assert.Equal("Japan", branch.Country);
     }
 }
