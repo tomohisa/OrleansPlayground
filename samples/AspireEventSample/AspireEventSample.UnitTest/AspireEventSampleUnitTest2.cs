@@ -13,7 +13,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
 
     [Fact]
     public void RegisterBranchTest()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Do(response => Assert.Equal(1, response.Version))
             .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.Equal(2, response.Version))
@@ -24,9 +24,9 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
 
     [Fact]
     public void RegisterTwoBranchTest()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Do(_ => Assert.Single(Repository.Events))
-            .Conveyor(_ => GivenCommandWithResult(new RegisterBranch("DDD2")))
+            .Conveyor(_ => GivenCommandWithResult(new RegisterBranch("DDD2", "USA")))
             .Do(_ => Assert.Equal(2, Repository.Events.Count))
             .Do(response => Assert.Equal(1, response.Version))
             .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
@@ -38,7 +38,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
 
     [Fact]
     public void RegisterBranchAndQueryTest()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Conveyor(
                 response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("DDD")))
@@ -49,7 +49,7 @@ public class AspireEventSampleUnitTest2 : SekibanInMemoryTestBase
 
     [Fact]
     public void RegisterBranchAndListQuery()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Conveyor(
                 response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQueryWithResult(new SimpleBranchListQuery("DDD")))

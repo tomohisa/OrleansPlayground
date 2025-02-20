@@ -12,14 +12,18 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
 {
     [Fact]
     public void Test1() =>
-        GivenCommandWithResult(new RegisterBranch("DDD"))
+        GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Do(response => Assert.Equal(1, response.Version))
             .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.Equal(2, response.Version))
             // .Do(_ => Task.Delay(10000))
             .Conveyor(response => ThenGetAggregateWithResult<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
-            .Do(payload => Assert.Equal("ES", payload.Name))
+            .Do(payload =>
+            {
+                Assert.Equal("ES", payload.Name);
+                Assert.Equal("Japan", payload.Country);
+            })
             .Conveyor(_ => ThenGetMultiProjectorWithResult<BranchMultiProjector>())
             .Do(
                 projector =>
@@ -33,7 +37,9 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
                 {
                     Assert.Equal(1, projector.Aggregates.Values.Count());
                     Assert.IsType<Branch>(projector.Aggregates.Values.First().Payload);
-                    Assert.Equal("ES", ((Branch)projector.Aggregates.Values.First().Payload).Name);
+                    var branch = (Branch)projector.Aggregates.Values.First().Payload;
+                    Assert.Equal("ES", branch.Name);
+                    Assert.Equal("Japan", branch.Country);
                 })
             .UnwrapBox();
 
@@ -57,7 +63,7 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
 
     [Fact]
     public void RegisterBranchAndListQueryTest() =>
-        GivenCommandWithResult(new RegisterBranch("DDD"))
+        GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Conveyor(
                 response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             // .Do(_ => Task.Delay(10000))

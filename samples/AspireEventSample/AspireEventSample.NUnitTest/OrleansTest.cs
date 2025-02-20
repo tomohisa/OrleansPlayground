@@ -13,13 +13,17 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
 {
     [Test]
     public void Test1()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Do(response => Assert.That(response.Version, Is.EqualTo(1)))
             .Conveyor(response => WhenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Do(response => Assert.That(response.Version, Is.EqualTo(2)))
             .Conveyor(response => ThenGetAggregateWithResult<BranchProjector>(response.PartitionKeys))
             .Conveyor(aggregate => aggregate.Payload.ToResultBox().Cast<Branch>())
-            .Do(payload => Assert.That(payload.Name, Is.EqualTo("ES")))
+            .Do(payload =>
+            {
+                Assert.That(payload.Name, Is.EqualTo("ES"));
+                Assert.That(payload.Country, Is.EqualTo("Japan"));
+            })
             .Conveyor(_ => ThenGetMultiProjectorWithResult<BranchMultiProjector>())
             .Do(
                 projector =>
@@ -33,7 +37,9 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
                 {
                     Assert.That(projector.Aggregates.Values.Count, Is.EqualTo(1));
                     Assert.That(projector.Aggregates.Values.First().Payload, Is.TypeOf<Branch>());
-                    Assert.That(((Branch)projector.Aggregates.Values.First().Payload).Name, Is.EqualTo("ES"));
+                    var branch = (Branch)projector.Aggregates.Values.First().Payload;
+                    Assert.That(branch.Name, Is.EqualTo("ES"));
+                    Assert.That(branch.Country, Is.EqualTo("Japan"));
                 })
             .UnwrapBox();
 
@@ -52,7 +58,7 @@ public class OrleansTest : SekibanOrleansTestBase<OrleansTest>
 
     [Test]
     public void RegisterBranchAndListQueryTest()
-        => GivenCommandWithResult(new RegisterBranch("DDD"))
+        => GivenCommandWithResult(new RegisterBranch("DDD", "Japan"))
             .Conveyor(
                 response => GivenCommandWithResult(new ChangeBranchName(response.PartitionKeys.AggregateId, "ES")))
             .Conveyor(_ => ThenQueryWithResult(new BranchExistsQuery("ES")))

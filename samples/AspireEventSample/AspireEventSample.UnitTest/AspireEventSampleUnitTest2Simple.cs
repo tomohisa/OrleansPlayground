@@ -13,7 +13,7 @@ public class AspireEventSampleUnitTest2Simple : SekibanInMemoryTestBase
     [Fact]
     public void RegisterBranchTest()
     {
-        var response1 = GivenCommand(new RegisterBranch("DDD"));
+        var response1 = GivenCommand(new RegisterBranch("DDD", "Japan"));
         Assert.Equal(1, response1.Version);
 
         var response2 = WhenCommand(new ChangeBranchName(response1.PartitionKeys.AggregateId, "ES"));
@@ -27,10 +27,10 @@ public class AspireEventSampleUnitTest2Simple : SekibanInMemoryTestBase
     [Fact]
     public void RegisterTwoBranchTest()
     {
-        var response1 = GivenCommand(new RegisterBranch("DDD"));
+        var response1 = GivenCommand(new RegisterBranch("DDD", "Japan"));
         Assert.Single(Repository.Events);
 
-        var response2 = GivenCommand(new RegisterBranch("DDD2"));
+        var response2 = GivenCommand(new RegisterBranch("DDD2", "USA"));
         Assert.Equal(2, Repository.Events.Count);
         Assert.Equal(1, response2.Version);
 
@@ -45,7 +45,7 @@ public class AspireEventSampleUnitTest2Simple : SekibanInMemoryTestBase
     [Fact]
     public void RegisterBranchAndQueryTest()
     {
-        var response1 = GivenCommand(new RegisterBranch("DDD"));
+        var response1 = GivenCommand(new RegisterBranch("DDD", "Japan"));
         var response2 = GivenCommand(new ChangeBranchName(response1.PartitionKeys.AggregateId, "ES"));
 
         var queryResult1 = ThenQuery(new BranchExistsQuery("DDD"));
@@ -58,7 +58,7 @@ public class AspireEventSampleUnitTest2Simple : SekibanInMemoryTestBase
     [Fact]
     public void RegisterBranchAndListQuery()
     {
-        var response1 = GivenCommand(new RegisterBranch("DDD"));
+        var response1 = GivenCommand(new RegisterBranch("DDD", "Japan"));
         var response2 = GivenCommand(new ChangeBranchName(response1.PartitionKeys.AggregateId, "ES"));
 
         var queryResult1 = ThenQuery(new SimpleBranchListQuery("DDD"));
