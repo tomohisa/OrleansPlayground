@@ -41,6 +41,7 @@ builder.Services.AddSingleton(
     AspireEventSampleApiServiceDomainTypes.Generate(AspireEventSampleApiServiceEventsJsonContext.Default.Options));
 // general json serializer options
 // builder.Services.AddSingleton(AspireEventSampleApiServiceDomainTypes.Generate());
+SekibanSerializationTypesChecker.CheckDomainSerializability(AspireEventSampleApiServiceDomainTypes.Generate());
 
 builder.Services.AddTransient<ICommandMetadataProvider, CommandMetadataProvider>();
 builder.Services.AddTransient<IExecutingUserProvider, HttpExecutingUserProvider>();
