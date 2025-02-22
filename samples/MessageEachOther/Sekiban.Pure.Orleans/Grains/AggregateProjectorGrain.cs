@@ -117,6 +117,10 @@ public class AggregateProjectorGrain(
             .UnwrapBox();
         state.State = orleansRepository.GetProjectedAggregate(result.Events).UnwrapBox();
         UpdatedAfterWrite = true;
+        
+        // notify INotificationGrain
+        var notificationGrain = GrainFactory.GetGrain<INotificationGrain>("Notification");
+        await notificationGrain.NotifyClients($"Command { orleansCommand.GetType().Name } ExecuteCommandAsync succeeded.");
         return result;
     }
 

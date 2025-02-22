@@ -2,6 +2,8 @@ using MessageEachOther.ApiService;
 using Microsoft.AspNetCore.Mvc;
 using MessageEachOther.Domain;
 using MessageEachOther.Domain.Generated;
+using OrgnalR.SignalR;
+using OrgnalR.Silo;
 using ResultBoxes;
 using Scalar.AspNetCore;
 using Sekiban.Pure.AspNetCore;
@@ -26,8 +28,13 @@ builder.AddKeyedAzureBlobClient("orleans-sekiban-grain-state");
 builder.UseOrleans(
     config =>
     {
+        
         config.UseDashboard(options => { });
         config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
+        // for SignalR.Orleans (7.2.0)
+        // config.UseSignalR();
+        // config.RegisterHub<NotificationHub>();
+        config.AddOrgnalRWithMemoryGrainStorage();
     });
 
 builder.Services.AddSingleton(
@@ -52,7 +59,9 @@ if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.To
     // Postgres settings
     builder.AddSekibanPostgresDb();
 }
-builder.Services.AddSignalR();
+
+// builder.Services.AddSignalR(); // .AddOrleans(); // for SignalR.Orleans (7.2.0)
+builder.Services.AddSignalR().UseOrgnalR();
 var app = builder.Build();
 
 var apiRoute = app
@@ -107,5 +116,6 @@ apiRoute
 app.MapDefaultEndpoints();
 
 app.MapHub<ChatHub>("/chatHub");
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
