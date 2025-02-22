@@ -34,7 +34,7 @@ builder.UseOrleans(
         // for SignalR.Orleans (7.2.0)
         // config.UseSignalR();
         // config.RegisterHub<NotificationHub>();
-        config.AddOrgnalRWithMemoryGrainStorage();
+        // config.AddOrgnalRWithMemoryGrainStorage();
     });
 
 builder.Services.AddSingleton(
@@ -61,7 +61,7 @@ if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.To
 }
 
 // builder.Services.AddSignalR(); // .AddOrleans(); // for SignalR.Orleans (7.2.0)
-builder.Services.AddSignalR().UseOrgnalR();
+builder.Services.AddSignalR();//.UseOrgnalR();
 var app = builder.Build();
 
 var apiRoute = app

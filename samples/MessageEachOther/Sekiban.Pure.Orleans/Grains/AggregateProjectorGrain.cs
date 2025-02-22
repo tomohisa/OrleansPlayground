@@ -119,8 +119,8 @@ public class AggregateProjectorGrain(
         UpdatedAfterWrite = true;
         
         // notify INotificationGrain
-        var notificationGrain = GrainFactory.GetGrain<INotificationGrain>("Notification");
-        await notificationGrain.NotifyClients($"Command { orleansCommand.GetType().Name } ExecuteCommandAsync succeeded.");
+        // var notificationGrain = GrainFactory.GetGrain<INotificationGrain>("Notification");
+        // await notificationGrain.NotifyClients($"Command { orleansCommand.GetType().Name } ExecuteCommandAsync succeeded.");
         return result;
     }
 

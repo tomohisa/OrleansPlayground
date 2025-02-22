@@ -149,7 +149,7 @@ else
 </script>
 
 @code {
-    private HubConnection hubConnection;
+    // private HubConnection hubConnection;
     private WeatherForecastQuery.WeatherForecastRecord[]? forecasts;
     private WeatherForecastModel forecastModel = new();
     private EditLocationModel editLocationModel = new();
@@ -158,19 +158,19 @@ else
     
     protected override async Task OnInitializedAsync()
     {
-        // SignalR Hub の URL は /chatHub として設定
-        hubConnection = new HubConnectionBuilder().WithUrlWithClientFactory("https+http://apiservice/notificationHub", HttpMessageHandlerFactory)
-            .Build();
-        
-        // サーバーから受信したメッセージを処理
-        hubConnection.On<string>("ReceiveMessage", async (msg) =>
-        {
-            Console.WriteLine("ReceiveMessage {0}", msg);
-            forecasts = await WeatherApi.GetWeatherAsync();
-            await InvokeAsync(StateHasChanged);
-        });
-
-        await hubConnection.StartAsync();
+        // // SignalR Hub の URL は /chatHub として設定
+        // hubConnection = new HubConnectionBuilder().WithUrlWithClientFactory("https+http://apiservice/notificationHub", HttpMessageHandlerFactory)
+        //     .Build();
+        //
+        // // サーバーから受信したメッセージを処理
+        // hubConnection.On<string>("ReceiveMessage", async (msg) =>
+        // {
+        //     Console.WriteLine("ReceiveMessage {0}", msg);
+        //     forecasts = await WeatherApi.GetWeatherAsync();
+        //     await InvokeAsync(StateHasChanged);
+        // });
+        //
+        // await hubConnection.StartAsync();
         forecasts = await WeatherApi.GetWeatherAsync();
     }
 
@@ -195,7 +195,7 @@ else
         try
         {
             await WeatherApi.RemoveWeatherAsync(weatherForecastId);
-            // forecasts = await WeatherApi.GetWeatherAsync();
+            forecasts = await WeatherApi.GetWeatherAsync();
         }
         catch (Exception ex)
         {
@@ -248,7 +248,7 @@ else
                 editLocationModel.WeatherForecastId,
                 editLocationModel.NewLocation!);
                 
-            // forecasts = await WeatherApi.GetWeatherAsync();
+            forecasts = await WeatherApi.GetWeatherAsync();
             
             await JsRuntime.InvokeVoidAsync("DisplayEditLocationModal", "hide");
         }
@@ -269,7 +269,7 @@ else
                 forecastModel.Summary!);
 
             await WeatherApi.InputWeatherAsync(command);
-            // forecasts = await WeatherApi.GetWeatherAsync();
+            forecasts = await WeatherApi.GetWeatherAsync();
             
             // Reset form and close modal
             forecastModel = new WeatherForecastModel();
