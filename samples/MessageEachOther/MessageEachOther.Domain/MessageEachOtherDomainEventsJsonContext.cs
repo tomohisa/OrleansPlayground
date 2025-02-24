@@ -12,6 +12,8 @@ namespace MessageEachOther.Domain;
 [JsonSerializable(typeof(MessageEachOther.Domain.WeatherForecastDeleted))]
 [JsonSerializable(typeof(EventDocument<MessageEachOther.Domain.WeatherForecastLocationUpdated>))]
 [JsonSerializable(typeof(MessageEachOther.Domain.WeatherForecastLocationUpdated))]
+[JsonSerializable(typeof(EventDocument<MessageEachOther.Domain.WeatherForecastDateUpdated>))]
+[JsonSerializable(typeof(MessageEachOther.Domain.WeatherForecastDateUpdated))]
 public partial class MessageEachOtherDomainEventsJsonContext : JsonSerializerContext
 {
 }

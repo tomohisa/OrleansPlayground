@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MessageEachOther.Domain\MessageEachOther.Domain.csproj" />
     <ProjectReference Include="..\MessageEachOther.ServiceDefaults\MessageEachOther.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Sekiban.Pure.Orleans\Sekiban.Pure.Orleans.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,7 +21,9 @@
     <PackageReference Include="Microsoft.Orleans.Clustering.AzureStorage" Version="9.1.2" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="9.1.2" />
     <PackageReference Include="Microsoft.Orleans.Persistence.Memory" Version="9.1.2" />
-    <PackageReference Include="Microsoft.Orleans.Streaming" Version="9.1.2" />
+    <PackageReference Include="Microsoft.Orleans.Streaming" Version="9.0.1" />
+    <PackageReference Include="OrgnalR.OrleansSilo" Version="9.0.0" />
+    <PackageReference Include="OrgnalR.SignalR" Version="9.0.0" />
     <PackageReference Include="OrleansDashboard" Version="8.2.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.0.15" />
     <PackageReference Include="Sekiban.Pure.CosmosDb" Version="1.0.0-preview6" />
