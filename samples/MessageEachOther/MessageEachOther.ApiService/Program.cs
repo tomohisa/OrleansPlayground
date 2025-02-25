@@ -2,8 +2,6 @@ using MessageEachOther.ApiService;
 using Microsoft.AspNetCore.Mvc;
 using MessageEachOther.Domain;
 using MessageEachOther.Domain.Generated;
-using OrgnalR.SignalR;
-using OrgnalR.Silo;
 using ResultBoxes;
 using Scalar.AspNetCore;
 using Sekiban.Pure.AspNetCore;
@@ -48,7 +46,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient<SekibanOrleansExecutor>();
 
-
+builder.Services.AddHostedService<OrleansStreamBackgroundService>();
 
 if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.ToLower() == "cosmos")
 {
