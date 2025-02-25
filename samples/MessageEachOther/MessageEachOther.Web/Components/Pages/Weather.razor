@@ -7,6 +7,8 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using Sekiban.Pure.Aggregates
 
+@implements IAsyncDisposable
+
 @inject WeatherApiClient WeatherApi
 @inject IJSRuntime JsRuntime
 @inject IHttpMessageHandlerFactory HttpMessageHandlerFactory
@@ -149,7 +151,8 @@ else
 </script>
 
 @code {
-    // private HubConnection hubConnection;
+    private HubConnection hubConnection;
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
     private WeatherForecastQuery.WeatherForecastRecord[]? forecasts;
     private WeatherForecastModel forecastModel = new();
     private EditLocationModel editLocationModel = new();
@@ -158,19 +161,22 @@ else
     
     protected override async Task OnInitializedAsync()
     {
-        // // SignalR Hub の URL は /chatHub として設定
-        // hubConnection = new HubConnectionBuilder().WithUrlWithClientFactory("https+http://apiservice/notificationHub", HttpMessageHandlerFactory)
-        //     .Build();
-        //
-        // // サーバーから受信したメッセージを処理
-        // hubConnection.On<string>("ReceiveMessage", async (msg) =>
-        // {
-        //     Console.WriteLine("ReceiveMessage {0}", msg);
-        //     forecasts = await WeatherApi.GetWeatherAsync();
-        //     await InvokeAsync(StateHasChanged);
-        // });
-        //
-        // await hubConnection.StartAsync();
+        // SignalR Hub connection setup
+        hubConnection = new HubConnectionBuilder().WithUrlWithClientFactory("https+http://apiservice/notificationHub", HttpMessageHandlerFactory)
+            .Build();
+        
+        // Handle received messages from the server
+        hubConnection.On<string,string>("ReceiveMessage", async (user, msg) =>
+        {
+            Console.WriteLine("ReceiveMessage {0},{1}", user, msg);
+            forecasts = await WeatherApi.GetWeatherAsync();
+            await InvokeAsync(StateHasChanged);
+        });
+        
+        // Start the connection
+        await hubConnection.StartAsync();
+        
+        // Initial load of forecasts
         forecasts = await WeatherApi.GetWeatherAsync();
     }
 
@@ -195,7 +201,7 @@ else
         try
         {
             await WeatherApi.RemoveWeatherAsync(weatherForecastId);
-            forecasts = await WeatherApi.GetWeatherAsync();
+            // No need to fetch forecasts here as it will be updated via SignalR
         }
         catch (Exception ex)
         {
@@ -247,8 +253,8 @@ else
             await WeatherApi.UpdateLocationAsync(
                 editLocationModel.WeatherForecastId,
                 editLocationModel.NewLocation!);
-                
-            forecasts = await WeatherApi.GetWeatherAsync();
+            
+            // No need to fetch forecasts here as it will be updated via SignalR
             
             await JsRuntime.InvokeVoidAsync("DisplayEditLocationModal", "hide");
         }
@@ -269,15 +275,23 @@ else
                 forecastModel.Summary!);
 
             await WeatherApi.InputWeatherAsync(command);
-            forecasts = await WeatherApi.GetWeatherAsync();
+            // No need to fetch forecasts here as it will be updated via SignalR
             
             // Reset form and close modal
             forecastModel = new WeatherForecastModel();
-            await JsRuntime.InvokeVoidAsync("$", "#addForecastModal", "modal", "hide");
+            await JsRuntime.InvokeVoidAsync("DisplayAddModal", "hide");
         }
         catch (Exception ex)
         {
             forecastModel.Error = "Failed to add weather forecast. Please try again.";
+        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
         }
     }
 }
