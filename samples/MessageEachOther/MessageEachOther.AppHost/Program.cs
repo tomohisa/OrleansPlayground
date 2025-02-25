@@ -20,9 +20,10 @@ var orleans = builder.AddOrleans("default")
 
 
 var apiService = builder.AddProject<MessageEachOther_ApiService>("apiservice")
-    .WithEndpoint("https", annotation => annotation.IsProxied = false)
+    // .WithEndpoint("https", annotation => annotation.IsProxied = false)
     .WithReference(postgres)
-    .WithReference(orleans);
+    .WithReference(orleans)
+    .WithReplicas(2);
 
 builder.AddProject<Projects.MessageEachOther_Web>("webfrontend")
     .WithExternalHttpEndpoints()

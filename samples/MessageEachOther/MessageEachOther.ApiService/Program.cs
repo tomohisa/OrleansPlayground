@@ -65,6 +65,17 @@ if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.To
 
 // builder.Services.AddSignalR(); // .AddOrleans(); // for SignalR.Orleans (7.2.0)
 builder.Services.AddSignalR();//.UseOrgnalR();
+
+// Add CORS services and configure a policy that allows all origins
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 var app = builder.Build();
 
 var apiRoute = app
@@ -73,6 +84,9 @@ var apiRoute = app
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
+
+// Use CORS middleware (must be called before other middleware that sends responses)
+app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {
