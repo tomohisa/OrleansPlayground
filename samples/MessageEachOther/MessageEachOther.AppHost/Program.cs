@@ -6,6 +6,7 @@ var storage = builder.AddAzureStorage("azurestorage")
     .RunAsEmulator(r => r.WithImage("azure-storage/azurite", "3.33.0"));
 var clusteringTable = storage.AddTables("orleans-sekiban-clustering");
 var grainStorage = storage.AddBlobs("orleans-sekiban-grain-state");
+var queue = storage.AddQueues("orleans-sekiban-queue");
 
 var postgresPassword = builder.AddParameter("postgres-password", true);
 var postgres = builder
@@ -16,7 +17,8 @@ var postgres = builder
 
 var orleans = builder.AddOrleans("default")
     .WithClustering(clusteringTable)
-    .WithGrainStorage("Default", grainStorage);
+    .WithGrainStorage("Default", grainStorage)
+    .WithStreaming(queue);
 
 
 var apiService = builder.AddProject<MessageEachOther_ApiService>("apiservice")

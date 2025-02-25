@@ -1,3 +1,4 @@
+using Azure.Storage.Queues;
 using MessageEachOther.ApiService;
 using Microsoft.AspNetCore.Mvc;
 using MessageEachOther.Domain;
@@ -23,12 +24,23 @@ builder.Services.AddOpenApi();
 
 builder.AddKeyedAzureTableClient("orleans-sekiban-clustering");
 builder.AddKeyedAzureBlobClient("orleans-sekiban-grain-state");
+builder.AddKeyedAzureQueueClient("orleans-sekiban-queue");
 builder.UseOrleans(
     config =>
     {
         
         config.UseDashboard(options => { });
-        config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
+        config.AddAzureQueueStreams("EventStreamProvider", (SiloAzureQueueStreamConfigurator configurator) =>
+        {
+            configurator.ConfigureAzureQueue(options =>
+            {
+                options.Configure<IServiceProvider>((queueOptions, sp) =>
+                {
+                    queueOptions.QueueServiceClient = sp.GetKeyedService<QueueServiceClient>("orleans-sekiban-queue");
+                });
+            });
+        });
+        // config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
         // for SignalR.Orleans (7.2.0)
         // config.UseSignalR();
         // config.RegisterHub<NotificationHub>();
