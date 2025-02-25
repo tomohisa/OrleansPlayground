@@ -46,6 +46,11 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient<SekibanOrleansExecutor>();
 
+// Register hub notification services
+builder.Services.AddTransient<IHubNotificationService, HubNotificationService<ChatHub>>();
+builder.Services.AddTransient<IHubNotificationService, HubNotificationService<NotificationHub>>();
+
+// Register the background service that will use all hub notification services
 builder.Services.AddHostedService<OrleansStreamBackgroundService>();
 
 if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.ToLower() == "cosmos")
