@@ -8,9 +8,9 @@ var clusteringTable = storage.AddTables("orleans-sekiban-clustering");
 var grainStorage = storage.AddBlobs("orleans-sekiban-grain-state");
 var queue = storage.AddQueues("orleans-sekiban-queue");
 
-var postgresPassword = builder.AddParameter("postgres-password", true);
+// var postgresPassword = builder.AddParameter("postgres-password", true);
 var postgres = builder
-    .AddPostgres("orleansSekibanPostgres", password: postgresPassword)
+    .AddPostgres("orleansSekibanPostgres")
     .WithDataVolume("orleansSekibanPostgresData")
     .WithPgAdmin()
     .AddDatabase("SekibanPostgres");
