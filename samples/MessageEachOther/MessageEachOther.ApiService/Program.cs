@@ -29,7 +29,7 @@ builder.UseOrleans(
     config =>
     {
         
-        config.UseDashboard(options => { });
+        // config.UseDashboard(options => { });
         config.AddAzureQueueStreams("EventStreamProvider", (SiloAzureQueueStreamConfigurator configurator) =>
         {
             configurator.ConfigureAzureQueue(options =>
@@ -38,6 +38,15 @@ builder.UseOrleans(
                 {
                     queueOptions.QueueServiceClient = sp.GetKeyedService<QueueServiceClient>("orleans-sekiban-queue");
                 });
+            });
+        });
+        
+        // Add grain storage for the stream provider
+        config.AddAzureBlobGrainStorage("EventStreamProvider", options =>
+        {
+            options.Configure<IServiceProvider>((opt, sp) =>
+            {
+                opt.BlobServiceClient = sp.GetKeyedService<Azure.Storage.Blobs.BlobServiceClient>("orleans-sekiban-grain-state");
             });
         });
         // config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
