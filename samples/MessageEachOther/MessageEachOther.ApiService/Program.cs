@@ -1,3 +1,4 @@
+using Azure.Storage.Queues;
 using MessageEachOther.ApiService;
 using Microsoft.AspNetCore.Mvc;
 using MessageEachOther.Domain;
@@ -23,12 +24,32 @@ builder.Services.AddOpenApi();
 
 builder.AddKeyedAzureTableClient("orleans-sekiban-clustering");
 builder.AddKeyedAzureBlobClient("orleans-sekiban-grain-state");
+builder.AddKeyedAzureQueueClient("orleans-sekiban-queue");
 builder.UseOrleans(
     config =>
     {
         
-        config.UseDashboard(options => { });
-        config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
+        // config.UseDashboard(options => { });
+        config.AddAzureQueueStreams("EventStreamProvider", (SiloAzureQueueStreamConfigurator configurator) =>
+        {
+            configurator.ConfigureAzureQueue(options =>
+            {
+                options.Configure<IServiceProvider>((queueOptions, sp) =>
+                {
+                    queueOptions.QueueServiceClient = sp.GetKeyedService<QueueServiceClient>("orleans-sekiban-queue");
+                });
+            });
+        });
+        
+        // Add grain storage for the stream provider
+        config.AddAzureBlobGrainStorage("EventStreamProvider", options =>
+        {
+            options.Configure<IServiceProvider>((opt, sp) =>
+            {
+                opt.BlobServiceClient = sp.GetKeyedService<Azure.Storage.Blobs.BlobServiceClient>("orleans-sekiban-grain-state");
+            });
+        });
+        // config.AddMemoryStreams("EventStreamProvider").AddMemoryGrainStorage("EventStreamProvider");
         // for SignalR.Orleans (7.2.0)
         // config.UseSignalR();
         // config.RegisterHub<NotificationHub>();
@@ -46,6 +67,11 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddTransient<SekibanOrleansExecutor>();
 
+// Register hub notification services
+builder.Services.AddTransient<IHubNotificationService, HubNotificationService<ChatHub>>();
+builder.Services.AddTransient<IHubNotificationService, HubNotificationService<NotificationHub>>();
+
+// Register the background service that will use all hub notification services
 builder.Services.AddHostedService<OrleansStreamBackgroundService>();
 
 if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.ToLower() == "cosmos")
@@ -60,6 +86,17 @@ if (builder.Configuration.GetSection("Sekiban").GetValue<string>("Database")?.To
 
 // builder.Services.AddSignalR(); // .AddOrleans(); // for SignalR.Orleans (7.2.0)
 builder.Services.AddSignalR();//.UseOrgnalR();
+
+// Add CORS services and configure a policy that allows all origins
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 var app = builder.Build();
 
 var apiRoute = app
@@ -68,6 +105,9 @@ var apiRoute = app
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
+
+// Use CORS middleware (must be called before other middleware that sends responses)
+app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {
